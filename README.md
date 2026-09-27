@@ -5,7 +5,8 @@ It pulls live candles, funding and open interest from public exchange APIs, comp
 rule-based "expert trader" signal engine that gives a **LONG / SHORT / DON'T TRADE** verdict (green / red / gray banner with
 plain-English reasons), a −100…+100 score, a market-condition label (chop detector), a multi-timeframe strip, a factor-by-factor
 breakdown, a trade plan, a position-size calculator, expert notes, a backtest with an out-of-sample check, an optional
-**A+ setups only** mode, an in-browser **AI probability model**, and an optional **AI analyst** chat (bring your own API key).
+**A+ setups only** mode, an in-browser **AI probability model**, an optional **AI analyst** chat (bring your own API key), and a
+**My trades** tracker that gives rules-based recommendations on positions you enter yourself.
 Works on phones and installs as a PWA.
 
 > Educational tool. The signals are rule-based, not financial advice. Leveraged futures can lose more than you expect.
@@ -153,6 +154,50 @@ Results of the 24-combo scan (Sep 27 2026, 1:02–1:06 PM CT; full tables in `te
 than 30 trades. Expectancy is positive in 13/24 combos for Normal (full history) and negative on e.g. BTC 1h (−0.23R over
 49 trades). Nothing here reaches — or should be expected to reach — a 95 % win rate.
 
+## My trades (log your own positions, get recommendations)
+
+Open the **My trades** tab (or the "My trades" button in the header) and tap **+ Add trade**: coin (the 6 perps), Long/Short,
+margin in USD, leverage 1–125 (quick buttons x5/x10/x20/x50/x100), entry price (pre-filled with the live price, editable),
+the timeframe the trade is based on (defaults to the one on screen) and optional stop-loss / take-profit. While you type, the
+form previews the position size and the estimated liquidation. Trades are saved in this browser's localStorage only
+(`fst_trades`); you can have several open, edit them, close one (enter the exit price → it moves to a history list with its
+P&L), or delete (tap twice). The app never places, changes or closes orders on any exchange.
+
+Each open trade updates on every refresh (45 s):
+* position size (margin × leverage) and coin quantity; unrealized P&L in $ and ROE %; price change since entry;
+  estimated round-trip fees (not included in P&L; funding is not included either);
+* **estimated liquidation price** — isolated margin with the same formula as the trade plan,
+  `entry × (1 − 1/leverage + 0.5 %)` for longs and `entry × (1 + 1/leverage − 0.5 %)` for shorts — and the % distance from
+  the current price to it; R-multiple progress against your stop (or against the suggested stop, labelled as such);
+* a **recommendation badge** with 1–4 plain-English reasons, computed from the same signal engine (normal mode) on the trade's
+  coin and timeframe, the next-higher timeframe verdict, and the trade's own numbers. Checked in this order:
+  **DANGER** (price at or past the estimated liquidation, or within 1 % / one ATR of it) → **CLOSE / CUT LOSS** (your stop, or
+  the suggested ATR stop if you set none, is broken) → signal **flipped** against the trade (**TAKE PROFIT** if it is in
+  profit, otherwise **CLOSE / CUT LOSS**) → **TAKE PROFIT** (T2 = 3R or your take-profit reached) → **TAKE PARTIAL PROFIT /
+  MOVE STOP TO ENTRY** (T1 = 1.5R reached, or ROE ≥ +100 %) → **DANGER** (the estimated liquidation comes before the stop) →
+  **TIGHTEN / CONSIDER CLOSING** (signal is now DON'T TRADE, or the higher timeframe points the other way) → **HOLD** (signal
+  still agrees);
+* a suggested stop / T1 / T2 from the entry (the trade plan's ATR/swing stop, 1.5R and 3R) when you didn't set them, and a
+  **leverage check**: the highest leverage at which that ATR stop still sits inside the liquidation price with a half-ATR
+  buffer, `floor(1 / (stop distance + 0.5 % + 0.5 ATR))`, shown as a lower-leverage option when yours is above it;
+* **leverage warnings**: the real move that liquidates the margin at your leverage (1/L − 0.5 %: x10 → 9.5 %, x20 → 4.5 %,
+  x50 → 1.5 %, x100 → 0.5 %, x125 → 0.3 %), a warning when the ATR stop is wider than the distance to liquidation (normal
+  noise could liquidate the trade), how big one average candle is compared to the remaining distance, and a general note at
+  50x+ (round-trip fees alone ≈ 5 % of margin at x50).
+
+Example — $100 margin at x50 on BTC at 84,808.3 (OKX, Sep 27 2026 2:18 PM CT): position $5,000 = 0.05896 BTC;
+**long** est. liquidation **83,536.2**, **short** est. liquidation **86,080.4** — a **1.5 %** move against either side wipes out
+the margin; each 1 % move is ±$50 (±50 % ROE); round-trip fees ≈ $5.
+
+**Ask AI about this trade** opens the AI analyst tab with a pre-filled prompt (coin, direction, margin, leverage, entry, current
+price, P&L, liquidation, stop/targets, the signal and its reasons, the 4 timeframe dots, the app's own recommendation and
+warnings) and attaches the trade as JSON to the system message, with extra rules: recommendation not order, the user decides,
+never promise outcomes, say the backtests are roughly break-even, risk first. You review the prompt and tap Send; it uses your
+own key. Without a key, everything above still works.
+
+> Recommendations come from the app's rules and are not guaranteed; the backtests show roughly break-even results.
+> Liquidation prices are estimates (your exchange's margin tiers, fees and funding move them).
+
 ## AI features
 
 ### AI probability model (in the browser, no key)
@@ -204,6 +249,14 @@ tested for any provider (no key available) — the UI flow was tested with a moc
   tap/click, hover/press pause, reduced motion, × persisted, no overflow/console errors). `tests/verse_results.json`.
 * `tests/ai_panel_test.py`: AI analyst flow with a mocked reply, missing-key message, save/forget key, real calls with fake
   keys (xAI 400, Anthropic 401 readable; OpenAI blocked by CORS → explained). `tests/ai_panel_results.json`.
+* `tests/trades_test.js` (Node): My-trades math — liquidation for long/short at x1–x125 (matches `Engine.plan`), P&L, ROE,
+  R-multiple, fees, close P&L, safe leverage — and 21 synthetic recommendation scenarios (signal agrees / flipped in profit
+  and at a loss / T1 / T2 / take-profit / DON'T TRADE / higher timeframe against / stop hit / near liquidation / stop beyond
+  liquidation / past liquidation…). `--live` adds the $100 x50 BTC example at the live price. `tests/trades_results.json`.
+* `tests/trades_ui_test.py` (Playwright; iPhone 14, iPhone SE, desktop 1440; `--base URL` for the live site): add trades
+  through the form (live-price prefill, x50 quick button, validation), recommendation badge + reasons + warnings, no console
+  errors, no horizontal overflow, tap targets ≥ 44 px, persistence after reload, Ask-AI prefill (no key → clear message),
+  edit, close → history, delete. `tests/trades_ui_results.json`.
 * `tests/browser_test.py` (desktop 1440×900 + screenshots), `tests/scan_all.py` + `tests/summarize.py` (all 24 combos →
   `tests/filter_comparison.md`), `tests/fallback_test.py` (OKX blocked → Gate.io), `tests/file_test.py` (`file://`).
 
@@ -216,7 +269,8 @@ python3 build.py && python3 -m http.server 8766 --bind 127.0.0.1 --directory dis
 ## Source layout
 
 `index.html` is generated by `python3 build.py`, which inlines `src/part_head.html` (markup + CSS),
-`src/part_indicators.js`, `src/part_engine.js`, `src/part_ml.js`, `src/part_app.js` and `src/part_verses.js` (with the verses from
+`src/part_indicators.js`, `src/part_engine.js`, `src/part_ml.js`, `src/part_trades.js` (My-trades math + recommendation
+rules, no DOM), `src/part_app.js` and `src/part_verses.js` (with the verses from
 `tests/verses_verified.json` injected), copies `pwa/manifest.webmanifest`,
 `pwa/sw.js` and `pwa/icons/` (made by `pwa/make_icons.py`) next to it, and writes the clean `dist/` folder.
 
@@ -233,7 +287,10 @@ python3 build.py && python3 -m http.server 8766 --bind 127.0.0.1 --directory dis
   `touch-action: auto`) but not verified.
 * The AI analyst was only tested with a mocked reply and with fake keys; it needs your own paid API key.
 * OKX rate-limits (HTTP 429) if you switch views very rapidly. The app retries with backoff and then falls back to Gate.io.
-* Liquidation price is an isolated-margin approximation (fixed 0.5 % MMR, fees and tiered margin ignored).
+* Liquidation price is an isolated-margin approximation (fixed 0.5 % MMR, fees and tiered margin ignored). The same
+  estimate is used in My trades; cross margin, added margin, partial closes and funding are not modelled.
+* My trades are stored per browser/device (localStorage); they don't sync between your phone and computer, and clearing
+  site data deletes them.
 * The first bars of each series have fewer than 200 HTF bars, so the HTF filter falls back to EMA50 there. Young listings
   have less history.
 * Chart times are shown in the browser's local timezone. VWAP sessions reset at 00:00 UTC.

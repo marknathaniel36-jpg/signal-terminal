@@ -177,6 +177,64 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
 }
 @media (prefers-reduced-motion:reduce){.verse .vl{transition:none}}
 
+/* ================= My trades ================= */
+.tbtn{font-weight:600;color:var(--txt);white-space:nowrap}.tbtn b,.tcount{font:700 11px var(--mono);color:#0a0e15;background:#f5d061;border-radius:9px;padding:0 5px;margin-left:5px}.tbtn b:empty,.tcount:empty{display:none}
+.tbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
+.tform{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:12px;margin-bottom:12px}
+.tfh{font-weight:700;color:#fff;margin-bottom:10px;font-size:13.5px}.tfh .mut{font-weight:400;font-size:11.5px}
+.tgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px}
+.tgrid label,.tgrid .lbl2{display:flex;flex-direction:column;gap:4px;font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;min-width:0}
+.tgrid input,.tgrid select{background:var(--bg);border:1px solid var(--line2);border-radius:7px;padding:7px 9px;font:13px var(--mono);color:var(--txt);width:100%;min-width:0;min-height:36px}
+.tgrid input:focus,.tgrid select:focus{outline:none;border-color:var(--blue)}
+.tgrid .full{grid-column:span 2}
+.tdir{display:flex;gap:6px}.tdir button{flex:1;min-height:36px;border-radius:7px;border:1px solid var(--line2);background:var(--bg);color:var(--mut);font:700 13px var(--sans);cursor:pointer}
+.tdir button.on.L{background:var(--gSolid);border-color:var(--gSolid);color:#fff}.tdir button.on.S{background:var(--rSolid);border-color:var(--rSolid);color:#fff}
+.tquick{display:flex;gap:6px;align-items:flex-end}.tquick button{flex:1;min-height:36px;border-radius:7px;border:1px solid var(--line2);background:var(--bg);color:var(--txt);font:700 12.5px var(--mono);cursor:pointer}
+.tquick button.on{border-color:#f5d061;color:#f5d061}
+.tentry{display:flex;gap:6px}.tentry input{flex:1}.tentry .aiB{white-space:nowrap;text-transform:none;letter-spacing:0}
+.tprev{margin:10px 0 0;font-size:12.5px;color:#c9d3df}.terr{color:#ffb3c1;font-size:12.5px;margin:6px 0}.terr:empty{display:none}
+.tacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.aiB.del{color:#ffb3c1;border-color:rgba(240,80,110,.4)}.aiB.sm{padding:3px 9px;font-size:11.5px}
+.tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,430px),1fr));gap:10px}
+.tcard{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;min-width:0}
+.thd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}.tsym{font:800 16px var(--sans);color:#fff}.tside{font:800 13px var(--sans)}.tlev{font:800 13px var(--mono);color:#f5d061}.thd .mut{font-size:12px}
+.rec{border-radius:9px;padding:9px 11px;margin-bottom:8px;border:1px solid var(--line2);background:rgba(255,255,255,.02)}
+.rec.hold{border-color:rgba(31,199,126,.45);background:rgba(31,199,126,.07)}.rec.tp{border-color:rgba(76,154,255,.45);background:rgba(76,154,255,.07)}
+.rec.tighten{border-color:rgba(245,176,65,.45);background:rgba(245,176,65,.07)}.rec.close{border-color:rgba(240,80,110,.5);background:rgba(240,80,110,.08)}.rec.danger{border-color:#ff3355;background:rgba(255,51,85,.13)}
+.rtop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.rbadge{display:inline-block;font:800 12.5px var(--sans);letter-spacing:.04em;padding:4px 10px;border-radius:6px;color:#fff;background:var(--nSolid)}
+.rbadge.hold{background:var(--gSolid)}.rbadge.tp{background:#2f7de1}.rbadge.tighten{background:#c98a14;color:#0a0e15}.rbadge.close{background:var(--rSolid)}.rbadge.danger{background:#ff2d4f;box-shadow:0 0 12px rgba(255,45,79,.55)}
+.rec ul{margin:7px 0 0;padding-left:18px;font-size:12.5px;color:#d3dbe6}.rec li{margin:2px 0}
+.tdots{display:flex;gap:7px;font:600 11px var(--mono);color:var(--mut)}.tdots span{display:flex;align-items:center;gap:3px}
+.tdots i{width:8px;height:8px;border-radius:50%;background:#6b7280;display:inline-block}.tdots i.LONG{background:var(--green)}.tdots i.SHORT{background:var(--red)}.tdots i.load{background:transparent;border:1px dashed var(--dim)}
+.tkv{margin-top:2px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:12.5px}.tkv .k{color:var(--mut)}.tkv .v{text-align:right;font-family:var(--mono);min-width:0;overflow-wrap:anywhere}
+.twarn{margin:0 0 7px;padding:6px 9px;border-radius:6px;font-size:12px;background:rgba(245,176,65,.08);border:1px solid rgba(245,176,65,.3);color:#ffd591}
+.twarn.hard{background:rgba(240,80,110,.1);border-color:rgba(240,80,110,.38);color:#ffb3c1}
+.tsafe{margin-top:7px;font-size:12px;color:#b9d6ff;background:rgba(76,154,255,.07);border:1px solid rgba(76,154,255,.25);border-radius:6px;padding:6px 9px}
+.tclose{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2)}
+.tclose label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.tclose input{background:var(--bg);border:1px solid var(--line2);border-radius:7px;padding:7px 9px;font:13px var(--mono);color:var(--txt);width:150px;min-height:36px}
+.tclose .mut{font-size:12px;align-self:center}
+.tdisc{font-size:11.5px;color:var(--mut);margin:12px 0 0;line-height:1.5}
+.thh{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 4px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.thist td{font-size:12.5px}.thist td.hx{text-align:right;width:40px}
+.aiChip{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:#c9d3df;background:rgba(245,208,97,.07);border:1px solid rgba(245,208,97,.3);border-radius:8px;padding:6px 9px;margin-bottom:6px}
+@media (max-width:1024px){
+  .tbtn{font-size:13px!important;padding:0 12px}
+  .tgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.tgrid .full{grid-column:1 / -1}
+  .tgrid input,.tgrid select,.tclose input{font-size:16px;min-height:44px}
+  .tdir button,.tquick button{min-height:44px;font-size:14px}
+  .tentry .aiB{min-height:44px}
+  .aiB.sm{min-height:44px;min-width:44px;font-size:13px}
+  .tkv{font-size:13.5px}.rec ul{font-size:13.5px}.twarn,.tsafe{font-size:13px}
+  .tacts .aiB{flex:1 1 auto}
+  .tclose input{width:100%}.tclose label{flex:1 1 100%}
+}
+@media (max-width:640px){
+  .tgrid .tquick{gap:5px}.tquick button{padding:0}
+  table.thist tr{grid-template-columns:repeat(2,minmax(0,1fr))}
+  table.thist td.hx{grid-column:1 / -1;text-align:right;width:auto}
+}
+
 /* ================= tablet & phone (<=1024px): single column ================= */
 @media (max-width:1024px){
   header{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand tick" "sym sym" "tf tf" "stats stats";gap:8px 10px;position:relative}
@@ -253,6 +311,7 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
   <div class="seg" id="tfSeg" role="tablist" aria-label="Timeframe"></div>
   <div class="tick"><span class="px mono" id="px">—</span><span class="ch" id="ch24">—</span><span class="vpill" id="vPill">—</span><span class="mut" style="font-size:11px" id="pxLabel"></span></div>
   <div class="hstat">
+    <button class="btn tbtn" id="tradesBtn" title="My trades: log your positions for live P&amp;L and recommendations">My trades<b id="tradesN"></b></button>
     <span>Funding <b class="mono" id="hFund">—</b></span>
     <span>OI 24h <b class="mono" id="hOi">—</b></span>
     <span><span class="dot" id="dot"></span><span id="srcTxt">connecting…</span></span>
@@ -278,6 +337,7 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
     <div class="card" id="tabsCard">
       <div class="tabs" id="tabs" role="tablist">
         <button data-tab="breakdown" class="on">Breakdown</button>
+        <button data-tab="trades">My trades<b class="tcount" id="tabTradesN"></b></button>
         <button data-tab="notes">Expert notes</button>
         <button data-tab="backtest">Backtest</button>
         <button data-tab="futures">Futures data</button>
@@ -285,6 +345,7 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
         <button data-tab="playbook">Playbook</button>
       </div>
       <div class="tabBody" id="tab-breakdown"></div>
+      <div class="tabBody hidden" id="tab-trades"></div>
       <div class="tabBody notes hidden" id="tab-notes"></div>
       <div class="tabBody hidden" id="tab-backtest"></div>
       <div class="tabBody hidden" id="tab-futures"></div>
@@ -1100,6 +1161,119 @@ const ML = (() => {
   return { features, fit, predict, run, metrics, auc, NAMES, P };
 })();
 </script>
+<script id="trades">
+/* ===== My Trades: pure math + rules-based recommendation for positions the user entered themselves (no DOM; unit-tested in Node) ===== */
+const Trades = (() => {
+  const fin = Number.isFinite;
+  const MMR = () => (typeof Engine !== 'undefined' ? Engine.CFG.mmr : 0.005);   // same maintenance-margin rate as the trade-plan liquidation estimate
+  const FEE = () => (typeof Engine !== 'undefined' ? Engine.CFG.feePerSide : 0.0005);
+  const TP1R = 1.5, TP2R = 3;
+  // isolated linear perp, same formula as Engine.plan(): long liq = entry × (1 − 1/L + mmr), short liq = entry × (1 + 1/L − mmr)
+  function liqPrice(entry, dir, lev, mmr = MMR()) { return dir === 1 ? entry * (1 - 1 / lev + mmr) : entry * (1 + 1 / lev - mmr); }
+  // adverse move from ENTRY that reaches the estimated liquidation, as a fraction (x50 → 1/50 − 0.5% = 1.5%)
+  const liqMoveFromEntry = (lev, mmr = MMR()) => Math.max(0, 1 / lev - mmr);
+  // live position numbers. P&L is before fees and funding.
+  function metrics(t, price, mmr = MMR()) {
+    const notional = t.margin * t.lev, qty = notional / t.entry, dir = t.dir;
+    const pnl = qty * (price - t.entry) * dir, roe = pnl / t.margin;
+    const chg = price / t.entry - 1;                        // raw price change since entry
+    const liq = liqPrice(t.entry, dir, t.lev, mmr);
+    const liqDist = (price - liq) * dir / price;            // fraction of the CURRENT price left before liquidation (<= 0: past it)
+    const R = fin(t.sl) && t.sl > 0 ? (t.entry - t.sl) * dir : NaN; // risk per coin to the user's stop (> 0 when the stop is on the losing side of entry)
+    const rNow = R > 0 ? (price - t.entry) * dir / R : NaN;
+    const fees = notional * FEE() * 2;                      // est. round-trip taker fees on the notional
+    return { notional, qty, pnl, roe, chg, liq, liqDist, liqMove: liqMoveFromEntry(t.lev, mmr), R, rNow, fees, feesPctMargin: fees / t.margin };
+  }
+  function closePnl(t, exit) { const qty = t.margin * t.lev / t.entry, pnl = qty * (exit - t.entry) * t.dir; return { pnl, roe: pnl / t.margin }; }
+  // highest leverage (1..125) that keeps the estimated liquidation at least `bufAtr` ATR beyond the stop:  L <= 1 / (stopDist + mmr + buffer)
+  function safeLeverage(entry, stop, atr, bufAtr = 0.5, mmr = MMR()) {
+    const d = Math.abs(entry - stop) / entry, b = (fin(atr) ? atr * bufAtr : 0) / entry;
+    return Math.max(1, Math.min(125, Math.floor(1 / (d + mmr + b))));
+  }
+  const pctTxt = (f, d = 2) => (f * 100).toFixed(d) + '%';
+  const sideWord = d => d === 1 ? 'long' : 'short';
+  /* in: { t (trade), price, sig: {vkey, score, dir, confidence, blocks, reasonsFor, reasonsAgainst}, htf: {tf, vkey, score}|null,
+          atr, sug: {stop, tp1, tp2} (ATR plan from the trade's entry), tf, fmt }
+     out: { action, cls, reasons[1..4], levels, warnings[], safeLev, m } */
+  function recommend(inp) {
+    const { t, price, sig, htf, atr, sug } = inp, fmt = inp.fmt || (v => String(+v.toPrecision(6))), tf = inp.tf || t.tf || '';
+    const m = metrics(t, price), dir = t.dir, side = sideWord(dir);
+    const userStop = fin(t.sl) && t.sl > 0, userTp = fin(t.tp) && t.tp > 0;
+    const stop = userStop ? t.sl : sug && sug.stop;
+    const rStop = userStop && (t.entry - t.sl) * dir > 0 ? t.sl : sug && sug.stop;  // a stop already trailed past entry can't define 1R: use the ATR stop
+    const Rp = fin(rStop) ? (t.entry - rStop) * dir : NaN;             // risk per coin (1R)
+    const hasR = Rp > 0, rNow = hasR ? (price - t.entry) * dir / Rp : NaN;
+    const T1 = hasR ? t.entry + dir * TP1R * Rp : NaN, T2 = hasR ? t.entry + dir * TP2R * Rp : NaN;
+    const atrPct = fin(atr) ? atr / price : NaN;
+    const sugStop = sug && sug.stop, sugDist = fin(sugStop) ? Math.abs(t.entry - sugStop) / t.entry : NaN;
+    const liqBeforeStop = fin(stop) && (dir === 1 ? stop <= m.liq : stop >= m.liq);
+    const liqBeforeAtrStop = fin(sugStop) && (dir === 1 ? sugStop <= m.liq : sugStop >= m.liq);
+    const safeLev = fin(sugStop) ? safeLeverage(t.entry, sugStop, atr) : null;
+    const agrees = sig && sig.vkey === (dir === 1 ? 'LONG' : 'SHORT'), against = sig && sig.vkey === (dir === 1 ? 'SHORT' : 'LONG');
+    const neutral = sig && sig.vkey === 'NOTRADE', leansWith = sig && sig.dir === dir;
+    const htfAgainst = htf && htf.vkey === (dir === 1 ? 'SHORT' : 'LONG'), htfWith = htf && htf.vkey === (dir === 1 ? 'LONG' : 'SHORT');
+    const stopHit = userStop && (dir === 1 ? price <= t.sl : price >= t.sl);
+    const atrStopBroken = !userStop && fin(sugStop) && (dir === 1 ? price <= sugStop : price >= sugStop);
+    const tpHit = userTp && (dir === 1 ? price >= t.tp : price <= t.tp);
+    const profitable = m.pnl > 0;
+    const nearLiq = m.liqDist <= Math.max(0.01, fin(atrPct) ? atrPct : 0);   // within 1% or one average candle of liquidation
+    const sigTxt = sig ? `${tf} signal: ${sig.vkey === 'NOTRADE' ? "DON'T TRADE" : sig.vkey} (score ${sig.score > 0 ? '+' : ''}${sig.score})` : `${tf} signal unavailable`;
+    const R = [];
+    let action, cls;
+    if (m.liqDist <= 0) {
+      action = 'DANGER'; cls = 'danger';
+      R.push(`Price ${fmt(price)} is past the estimated liquidation price ${fmt(m.liq)} — this position has probably been liquidated. Check it on your exchange.`);
+    } else if (nearLiq) {
+      action = 'DANGER'; cls = 'danger';
+      R.push(`Only ${pctTxt(m.liqDist)} between the price and the estimated liquidation ${fmt(m.liq)}${fin(atrPct) ? ` — ${atrPct >= m.liqDist ? 'less than' : 'about'} one average ${tf} candle (ATR ${pctTxt(atrPct)})` : ''}.`);
+      if (stopHit || atrStopBroken) R.push(stopHit ? `Your stop ${fmt(t.sl)} has already been hit.` : `Price is already through the suggested ATR stop ${fmt(sugStop)}.`);
+      R.push('Reduce size or close to protect the rest of your margin; adding margin only buys a little room.');
+    } else if (stopHit || atrStopBroken) {
+      action = 'CLOSE / CUT LOSS'; cls = 'close';
+      R.push(stopHit ? `Your stop ${fmt(t.sl)} has been hit (price ${fmt(price)}). ${profitable ? 'It was protecting profit — take it.' : "The plan was to be out here — don't widen it."}` : `Price ${fmt(price)} is through the suggested ATR stop ${fmt(sugStop)} — by the app's rules the idea is invalid.`);
+      if (against) R.push(`The ${sigTxt} now points the other way.`);
+    } else if (against) {
+      action = profitable ? 'TAKE PROFIT' : 'CLOSE / CUT LOSS'; cls = profitable ? 'tp' : 'close';
+      R.push(`The ${sigTxt} flipped against your ${side}.`);
+      R.push(profitable ? `You're up ${pctTxt(m.roe, 1)} ROE — the rules say bank it rather than give it back.` : `You're down ${pctTxt(-m.roe, 1)} ROE; the rules no longer support holding a losing ${side}.`);
+    } else if (hasR && rNow >= TP2R || tpHit) {
+      action = 'TAKE PROFIT'; cls = 'tp';
+      R.push(tpHit ? `Your take-profit ${fmt(t.tp)} has been reached.` : `Price reached T2 (3R) at ${fmt(T2)} — ${rNow.toFixed(1)}R in your favor.`);
+    } else if (hasR && rNow >= TP1R || m.roe >= 1) {
+      action = 'TAKE PARTIAL PROFIT / MOVE STOP TO ENTRY'; cls = 'tp';
+      R.push(hasR && rNow >= TP1R ? `Price reached T1 (1.5R) at ${fmt(T1)} — ${rNow.toFixed(1)}R in your favor${userStop ? '' : ' (vs the suggested stop)'}.` : `ROE is +${pctTxt(m.roe, 0)} — you've more than doubled the margin.`);
+      R.push(`Taking some off and moving the stop to entry (${fmt(t.entry)}) makes the rest a free trade${liqBeforeStop ? ' and also puts your stop ahead of liquidation' : ''}.`);
+    } else if (liqBeforeStop || liqBeforeAtrStop) {
+      action = 'DANGER'; cls = 'danger';
+      R.push(`At x${t.lev} the estimated liquidation (${fmt(m.liq)}) comes before ${liqBeforeStop && userStop ? `your stop (${fmt(t.sl)})` : `the suggested ATR stop (${fmt(sugStop)})`} — normal ${tf} swings could liquidate you before any stop triggers.`);
+      if (safeLev && safeLev < t.lev) R.push(`At x${safeLev} or lower the ATR stop would sit inside the liquidation price.`);
+    } else if (neutral || (agrees && htfAgainst)) {
+      action = 'TIGHTEN / CONSIDER CLOSING'; cls = 'tighten';
+      R.push(neutral ? `The ${sigTxt} — the setup ${leansWith ? 'has weakened (still leans ' + side + ')' : 'now leans ' + sideWord(-dir)}.` : `The ${sigTxt} agrees, but the ${htf.tf} is ${htf.vkey} — timeframes conflict.`);
+      if (neutral && sig.blocks && sig.blocks[0]) R.push('Main reason: ' + sig.blocks[0].replace(/\.$/, '') + '.');
+    } else if (agrees) {
+      action = 'HOLD'; cls = 'hold';
+      R.push(`The ${sigTxt} still agrees with your ${side}.`);
+      if (htfWith) R.push(`The ${htf.tf} agrees too.`);
+    } else {
+      action = 'TIGHTEN / CONSIDER CLOSING'; cls = 'tighten'; R.push(sig ? `The ${sigTxt} doesn't confirm your ${side}.` : 'No live signal for this coin/timeframe yet — manage the trade by your stop.');
+    }
+    // one extra context reason if room: signal support, stop status, P&L position
+    if (R.length < 4 && sig && sig.reasonsFor && sig.reasonsFor[0] && (cls === 'hold' || cls === 'tp' && agrees)) R.push(sig.reasonsFor[0]);
+    if (R.length < 4 && !userStop && fin(sugStop) && cls !== 'close') R.push(`No stop set — suggested ATR stop ${fmt(sugStop)} (${pctTxt(sugDist)} from entry).`);
+    if (R.length < 4 && hasR && fin(rNow) && cls === 'hold') R.push(`Progress: ${rNow >= 0 ? '+' : ''}${rNow.toFixed(2)}R · T1 ${fmt(T1)} · T2 ${fmt(T2)}.`);
+    // leverage warnings (factual)
+    const W = [];
+    W.push({ lvl: t.lev >= 20 ? 'hard' : 'soft', text: `At x${t.lev}, a ~${pctTxt(m.liqMove, m.liqMove < 0.1 ? 2 : 1)} move against your entry liquidates your whole margin ($${(+t.margin).toLocaleString('en-US', { maximumFractionDigits: 2 })}) — estimate using ${(MMR() * 100).toFixed(1)}% maintenance margin; fees and funding bring it closer.` });
+    if (fin(sugDist) && sugDist > m.liqMove) W.push({ lvl: 'hard', text: `The ATR-based stop is ${pctTxt(sugDist)} from entry but liquidation is only ${pctTxt(m.liqMove)} away: ordinary ${tf} noise could liquidate this trade before a sensible stop is reached.` });
+    else if (fin(atrPct) && atrPct >= m.liqDist * 0.5 && m.liqDist > 0) W.push({ lvl: 'hard', text: `One average ${tf} candle (ATR ${pctTxt(atrPct)}) is ${pctTxt(atrPct / m.liqDist, 0)} of the remaining distance to liquidation.` });
+    if (t.lev >= 50) W.push({ lvl: 'hard', text: `50x and above: round-trip fees alone are about ${pctTxt(m.feesPctMargin, 1)} of your margin, and a single wick can close the position. Most of the time lower leverage with the same stop is the safer way to size.` });
+    if (userStop && liqBeforeStop) W.push({ lvl: 'hard', text: `Your stop ${fmt(t.sl)} is beyond the estimated liquidation ${fmt(m.liq)} — you'd be liquidated first.` });
+    return { action, cls, reasons: R.slice(0, 4), warnings: W, safeLev, m, rNow, T1, T2, stop, stopIsUser: userStop, sug, liqBeforeStop, liqBeforeAtrStop, nearLiq, atrPct };
+  }
+  return { liqPrice, liqMoveFromEntry, metrics, closePnl, safeLeverage, recommend, TP1R, TP2R };
+})();
+</script>
 <script id="app">
 /* ===== App: data layer (OKX primary, Gate.io fallback), rendering, refresh, mobile + PWA ===== */
 (() => {
@@ -1566,9 +1740,9 @@ const ML = (() => {
       <table class="calib"><thead><tr><th>Predicted</th><th>Bars</th><th>Avg predicted</th><th>Actual TP1 rate</th></tr></thead><tbody>${bins}</tbody></table>
       <p class="mut" style="font-size:11.5px;margin:6px 0 0">Logistic regression (L2) on ${ML.NAMES.length} engine features signed by trade direction (trend alignment, ADX, CHOP, RSI, MACD hist, %B, bandwidth, ATR%, volume, OBV, EMA distances, score, agreement…). Label: would a trade on that closed bar, in the score's direction, with the engine's stop, reach TP1 (1.5R) before the stop. Trained on ${ml.nTrain} bars of the first 70% (labels resolved inside it), tested on ${ml.nTest} bars of the last 30%. L2 strength λ=${ml.params.lambda} and the filter threshold ${pc(ml.thr)} were picked by walk-forward inside the first 70% only (out-of-fold avg R above the threshold ${sR(ml.thrAvgR)} vs ${sR(ml.thrAllAvgR)} for every bar${ml.thrAvgR > ml.thrAllAvgR ? '' : ' — no threshold helped even on training data'}). Funding/OI excluded (no free history). The live probability uses the same recipe refit on all resolved bars. Largest weights: ${ml.top.slice(0, 4).map(t => `${t.name} ${t.w > 0 ? '+' : ''}${t.w.toFixed(2)}`).join(', ')}. TP2 (3R) was reached on ${pc(ml.oosTp2)} of test bars.</p></div>`;
   }
-  const TAB_RENDER = { breakdown: renderBreakdown, notes: D => renderNotes(D), backtest: renderBacktest, futures: D => renderFutures(D), ai: D => renderAi(D), playbook: () => { } };
+  const TAB_RENDER = { breakdown: renderBreakdown, trades: () => renderTrades(), notes: D => renderNotes(D), backtest: renderBacktest, futures: D => renderFutures(D), ai: D => renderAi(D), playbook: () => { } };
   function renderActiveTab(force) {
-    const D = S.data; if (!D) return;
+    const D = S.data; if (!D && S.tab !== 'trades') return;
     const key = S.tab, stamp = S.ver + ':' + S.mode + ':' + S.ai + (key === 'backtest' ? (D.bt ? ':bt' : ':nobt') : '');
     if (!force && S.rendered[key] === stamp) return;
     TAB_RENDER[key](D); S.rendered[key] = stamp;
@@ -1657,6 +1831,16 @@ Rules:
 - Always cover risk: size from the stop distance (0.5–1% of equity), leverage versus the liquidation price, funding costs, and event/weekend risk.
 - Be concise (about 250 words unless asked for more), with short headings or bullets.
 - End with one line: "Educational only, not financial advice."`;
+  const TRADE_SYS = `
+
+TRADE REVIEW MODE. The user logged a position they opened themselves on their exchange and is asking what to do with it. The trade data is in "TRADE UNDER REVIEW" below; if the dashboard snapshot above is for a different coin or timeframe, use the trade data (which includes the signal for the trade's own coin and timeframe) and say so.
+- Give a recommendation (hold / take partial profit / move the stop / tighten / close), not an order. The app never places or closes trades; the user decides.
+- You must not promise or imply outcomes: no "this will go up", no guaranteed profit, no win-rate promises. Say plainly that the app's backtests are roughly break-even.
+- Put risk first: if the estimated liquidation is closer than the ATR stop, or within normal volatility, say so plainly and mention lowering leverage or size. The liquidation price is an estimate.
+- Use the specific levels given (entry, stop, T1/T2, liquidation). Do not invent news or prices.
+
+TRADE UNDER REVIEW (JSON):
+`;
   const EXPLAIN_Q = 'Explain this setup like a disciplined, risk-first futures trader: (1) what the dashboard is saying and why, (2) the bull case and the bear case from this data, (3) what would invalidate it (specific levels), (4) trade now or wait, and exactly what to wait for, (5) risk management for this exact plan (size, leverage vs liquidation, funding).';
   function aiCfg() {
     let prov = localStorage.getItem('fst_ai_prov') || 'xai'; if (!PROVIDERS[prov]) prov = 'xai';
@@ -1696,7 +1880,7 @@ Rules:
     return out + (list ? '</ul>' : '');
   }
   async function callLLM(cfg, D) {
-    const P = PROVIDERS[cfg.prov], sys = AI_SYS + '\n\nCURRENT DASHBOARD SNAPSHOT (JSON):\n' + JSON.stringify(snapshot(D));
+    const P = PROVIDERS[cfg.prov], sys = AI_SYS + '\n\nCURRENT DASHBOARD SNAPSHOT (JSON):\n' + JSON.stringify(snapshot(D)) + (S.aiTrade ? TRADE_SYS + JSON.stringify(S.aiTrade.ctx) : '');
     const hist = S.chat.filter(m => m.role === 'user' || m.role === 'assistant').slice(-8).map(m => ({ role: m.role, content: m.content }));
     while (hist.length && hist[0].role !== 'user') hist.shift();
     const headers = { 'Content-Type': 'application/json' }; let body;
@@ -1750,6 +1934,7 @@ Rules:
       el.innerHTML = `<div class="aiPanel"><div>
         <div class="aiLog" id="aiLog" aria-live="polite"></div>
         <div class="aiBtns" style="margin-bottom:8px"><button class="aiB pri" id="aiExplain">Explain this setup</button><button class="aiB" data-q="What exactly would invalidate this setup, and which price levels matter most?">What invalidates it?</button><button class="aiB" data-q="Should I wait instead of trading? What specific conditions am I waiting for?">Should I wait?</button><button class="aiB" id="aiClear">Clear</button></div>
+        <div class="aiChip hidden" id="aiTradeChip"></div>
         <div class="aiIn"><textarea id="aiQ" rows="2" placeholder="Ask about this chart…" enterkeyhint="send"></textarea><button class="aiB pri" id="aiSend">Send</button></div>
         <details style="margin-top:10px"><summary class="mut" style="cursor:pointer;font-size:12px;min-height:32px">Data sent with each question (JSON snapshot)</summary><pre id="aiSnap"></pre></details>
       </div><div class="aiSet">
@@ -1770,12 +1955,265 @@ Rules:
       el.querySelectorAll('[data-q]').forEach(b => b.onclick = () => aiSend(b.dataset.q));
       $('aiSend').onclick = () => { const q = $('aiQ').value.trim(); if (q) { $('aiQ').value = ''; aiSend(q); } };
       $('aiQ').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !isPhone()) { e.preventDefault(); $('aiSend').click(); } });
-      $('aiClear').onclick = () => { S.chat = []; renderChat(); };
+      $('aiClear').onclick = () => { S.chat = []; S.aiTrade = null; renderAiTradeChip(); renderChat(); };
       syncAiSettings();
     }
-    $('aiSnap').textContent = JSON.stringify(snapshot(D), null, 1); renderChat();
+    $('aiSnap').textContent = JSON.stringify(snapshot(D), null, 1) + (S.aiTrade ? '\n\nTRADE UNDER REVIEW:\n' + JSON.stringify(S.aiTrade.ctx, null, 1) : ''); renderChat(); renderAiTradeChip();
   }
-  window.__ai = { send: (q, l) => aiSend(q, l), snapshot: () => snapshot(S.data), providers: PROVIDERS, system: AI_SYS };
+  window.__ai = { send: (q, l) => aiSend(q, l), snapshot: () => snapshot(S.data), providers: PROVIDERS, system: AI_SYS, tradeSystem: TRADE_SYS };
+
+  /* ---------- My Trades: positions the user entered themselves, live P&L / liquidation, rules-based recommendation (never places orders) ---------- */
+  const TKEY = 'fst_trades', TQUICK = [5, 10, 20, 50, 100], NEXT_TF = { '15m': '1h', '1h': '4h', '4h': '1d', '1d': null };
+  const T = { form: null, formN: 0, closing: null, delArm: null, busy: false, again: false, err: '' };   // UI state
+  S.tmk = {}; // per-coin market bundle for trades: { at, price, futE, tf: { '1h': { ev, x, i } } }
+  function tLoad() { try { const j = JSON.parse(localStorage.getItem(TKEY) || '{}'); return { open: Array.isArray(j.open) ? j.open : [], history: Array.isArray(j.history) ? j.history : [] }; } catch (e) { return { open: [], history: [] }; } }
+  function tSave(st) { localStorage.setItem(TKEY, JSON.stringify(st)); tBadge(); }
+  const usdF = (v, d = 2) => (v < 0 ? '−$' : '$') + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const sgnUsd = v => (v > 0 ? '+' : '') + usdF(v);
+  const sgnPct = (f, d = 2) => (f > 0 ? '+' : f < 0 ? '−' : '') + Math.abs(f * 100).toFixed(d) + '%';
+  const qtyF = q => q.toLocaleString('en-US', { maximumFractionDigits: q < 1 ? 5 : q < 100 ? 3 : 0 });
+  function tBadge() { const n = tLoad().open.length; $('tradesN').textContent = n ? ' ' + n : ''; $('tabTradesN').textContent = n ? ' ' + n : ''; }
+  // live price for a coin: current view → trade bundle → ticker request
+  async function livePrice(sym) {
+    if (S.data && sym === S.sym && fin(S.data.fut.last)) return S.data.fut.last;
+    const b = S.tmk[sym]; if (b && Date.now() - b.at < 60e3 && fin(b.price)) return b.price;
+    const s = SYMBOLS[sym];
+    try { const j = await getJSON(`https://www.okx.com/api/v5/market/ticker?instId=${s.okx}`, 8000, 1); const p = +j.data[0].last; if (fin(p) && p > 0) return p; } catch (e) { }
+    try { const j = await getJSON(`https://api.gateio.ws/api/v4/futures/usdt/tickers?contract=${s.gate}`, 8000, 1); const p = +j[0].last; if (fin(p) && p > 0) return p; } catch (e) { }
+    return NaN;
+  }
+  const inflight = {};
+  function tFutures(sym) { // positioning data for other coins (same inputs the main signal uses), cached 60 s
+    const k = 'fut|' + sym, hit = S.tmk['_' + k]; if (hit && Date.now() - hit.at < 40e3) return Promise.resolve(hit.v);
+    return inflight[k] || (inflight[k] = futuresData(sym).then(v => { S.tmk['_' + k] = { v, at: Date.now() }; return v; }).finally(() => delete inflight[k]));
+  }
+  async function tBundle(sym) {
+    const cur = S.data && sym === S.sym, out = { at: Date.now(), tf: {} };
+    let fut = cur ? S.data.fut : null;
+    if (!fut) try { fut = await tFutures(sym); } catch (e) { fut = {}; }
+    const futE = cur ? S.data.futE : { funding: fut.funding8h, oiChg24: fut.oiChg24, priceChg24: fut.priceChg24, lsr: fut.lsr };
+    for (const tf of MAIN_TFS) {
+      try {
+        if (cur && tf === S.tf) { out.tf[tf] = { ev: S.data.evRaw, x: S.data.x, i: S.data.evRaw.i }; continue; }
+        const Tf = TFS[tf], l = await cachedCandles(sym, tf, MTF_BARS), h = await cachedCandles(sym, Tf.htf, MTF_BARS, l.src);
+        const top = Tf.top ? await cachedCandles(sym, Tf.top, TOP_BARS, l.src) : null;
+        const x = Engine.buildCtx(l.c, h.c, Tf.sec, TFS[Tf.htf].sec, top ? top.c : null, 86400, Tf.top);
+        const i = l.c[l.c.length - 1].closed ? x.n - 1 : x.n - 2;
+        out.tf[tf] = { ev: Engine.evaluate(x, i, futE, Tf.htf, { dataIssues: dataIssues(l.c, tf) }), x, i, last: l.c[l.c.length - 1].c };
+      } catch (e) { console.warn('trades: market data', sym, tf, e.message); }
+    }
+    const anyLast = Object.values(out.tf).map(v => v.last).find(fin);
+    out.price = fin(fut.last) ? fut.last : cur ? S.data.x.c[S.data.x.n - 1] : anyLast;
+    return out;
+  }
+  // refresh market data for every coin with an open trade (after each load, on tab open, after adding); re-renders when visible
+  async function updateTrades() {
+    const syms = [...new Set(tLoad().open.map(t => t.sym))].filter(s => SYMBOLS[s]);
+    if (!syms.length) { if (S.tab === 'trades') renderTrades(); return; }
+    if (T.busy) { T.again = true; return; }
+    T.busy = true;
+    try { for (const s of syms) { S.tmk[s] = await tBundle(s); if (S.tab === 'trades') renderTrades(); } }
+    finally { T.busy = false; if (T.again) { T.again = false; updateTrades(); } }
+  }
+  function tAnalysis(t) { // everything the card and the AI prompt need, or null while market data is loading
+    const b = S.tmk[t.sym]; if (!b) return null;
+    const price = S.data && t.sym === S.sym && fin(S.data.fut.last) ? S.data.fut.last : b.price;
+    const e = b.tf[t.tf] || b.tf[MAIN_TFS.find(k => b.tf[k])]; if (!e || !fin(price)) return null;
+    const ev = e.ev, atr = e.x.atr[e.i], sug = Engine.plan(e.x, e.i, t.dir, t.lev, t.entry);
+    const reasonsFor = ev.factors.filter(f => Math.sign(f.val) === t.dir && f.val !== 0).sort((a, c) => Math.abs(c.val) - Math.abs(a.val)).map(f => f.reason);
+    const reasonsAgainst = ev.factors.filter(f => Math.sign(f.val) === -t.dir && f.val !== 0).sort((a, c) => Math.abs(c.val) - Math.abs(a.val)).map(f => f.reason);
+    const htfK = NEXT_TF[t.tf], he = htfK && b.tf[htfK];
+    const sig = { vkey: ev.vkey, score: ev.score, dir: ev.dir, confidence: ev.confidence, blocks: ev.blocks, reasonsFor, reasonsAgainst };
+    const rec = Trades.recommend({ t, price, sig, htf: he ? { tf: htfK, vkey: he.ev.vkey, score: he.ev.score } : null, atr, sug, tf: t.tf, fmt: fmtP });
+    const dots = MAIN_TFS.map(k => ({ tf: k, vkey: b.tf[k] ? b.tf[k].ev.vkey : null, score: b.tf[k] ? b.tf[k].ev.score : null }));
+    return { price, ev, sig, rec, dots, atr, sug, at: b.at };
+  }
+  const VW = k => k === 'LONG' ? 'LONG' : k === 'SHORT' ? 'SHORT' : k ? NT : '…';
+  function tradeCard(t) {
+    const A = tAnalysis(t), L = t.dir === 1, head = `<div class="thd"><span class="tsym">${t.sym}</span><span class="tside ${L ? 'up' : 'dn'}">${L ? '▲ LONG' : '▼ SHORT'}</span><span class="tlev">x${t.lev}</span><span class="mut">${usdF(t.margin, t.margin % 1 ? 2 : 0)} margin · ${t.tf}</span></div>`;
+    const acts = `<div class="tacts"><button class="aiB pri" data-tact="ai" data-id="${t.id}">Ask AI about this trade</button><button class="aiB" data-tact="edit" data-id="${t.id}">Edit</button><button class="aiB" data-tact="close" data-id="${t.id}">Close</button><button class="aiB del" data-tact="del" data-id="${t.id}">${T.delArm === t.id ? 'Tap again to delete' : 'Delete'}</button></div>`;
+    const closer = T.closing === t.id ? `<div class="tclose"><label>Exit price<input id="tcExit" type="number" inputmode="decimal" step="any" value="${A ? +A.price.toPrecision(8) : t.entry}" enterkeyhint="done"></label><span class="mut" id="tcPrev"></span><button class="aiB pri" data-tact="closeOk" data-id="${t.id}">Confirm close</button><button class="aiB" data-tact="closeCancel" data-id="${t.id}">Cancel</button></div>` : '';
+    if (!A) {
+      const m = Trades.metrics(t, t.entry);
+      return `<div class="tcard" data-id="${t.id}">${head}<div class="tkv"><span class="k">Entry</span><span class="v">${fmtP(t.entry)}</span><span class="k">Position</span><span class="v">${usdF(m.notional, 0)} · ${qtyF(m.qty)} ${t.sym}</span><span class="k">Est. liquidation</span><span class="v amb">${fmtP(m.liq)}</span></div><p class="mut" style="margin:6px 0">Loading live ${t.sym} data for the recommendation…</p>${closer}${acts}</div>`;
+    }
+    const { price, rec } = A, m = rec.m, pc = m.pnl >= 0 ? 'up' : 'dn';
+    const stopTxt = rec.stopIsUser ? `${fmtP(t.sl)} <span class="mut">(yours)</span>` : `${fmtP(A.sug.stop)} <span class="mut">(suggested, ATR)</span>`;
+    const tpTxt = fin(t.tp) && t.tp > 0 ? `<span class="k">Your take-profit</span><span class="v up">${fmtP(t.tp)}</span>` : '';
+    const rTxt = fin(rec.rNow) ? `${rec.rNow >= 0 ? '+' : ''}${rec.rNow.toFixed(2)}R${rec.stopIsUser && (t.entry - t.sl) * t.dir > 0 ? '' : ' <span class="mut">(vs suggested stop)</span>'}` : '—';
+    const warn = rec.warnings.map(w => `<div class="twarn ${w.lvl}">⚠ ${esc(w.text)}</div>`).join('');
+    const lev = !rec.safeLev ? '' : rec.safeLev < t.lev ? `<div class="tsafe">Lower-leverage option: at <b>x${rec.safeLev}</b> or less, the suggested ATR stop (${fmtP(A.sug.stop)}) sits inside the estimated liquidation price, with a half-ATR buffer. Same margin at lower leverage = smaller position and room for normal noise.</div>`
+      : `<div class="tsafe">Leverage check: the suggested ATR stop (${fmtP(A.sug.stop)}) stays inside liquidation up to about <b>x${rec.safeLev}</b> (half-ATR buffer), so x${t.lev} passes this check.</div>`;
+    const dots = `<span class="tdots">${A.dots.map(d => `<span title="${d.tf}: ${VW(d.vkey)}"><i class="${d.vkey || 'load'}"></i>${d.tf}</span>`).join('')}</span>`;
+    return `<div class="tcard" data-id="${t.id}">${head}
+      <div class="rec ${rec.cls}"><div class="rtop"><span class="rbadge ${rec.cls}">${rec.action}</span>${dots}</div><ul>${rec.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>
+      ${warn}
+      <div class="tkv">
+        <span class="k">Entry → now</span><span class="v">${fmtP(t.entry)} → <b>${fmtP(price)}</b> <span class="${m.chg >= 0 ? 'up' : 'dn'}">(${sgnPct(m.chg)})</span></span>
+        <span class="k">Unrealized P&amp;L</span><span class="v ${pc}" style="font-weight:700">${sgnUsd(m.pnl)} · ${sgnPct(m.roe, 1)} ROE</span>
+        <span class="k">Position</span><span class="v">${usdF(m.notional, 0)} · ${qtyF(m.qty)} ${t.sym}</span>
+        <span class="k">Est. liquidation</span><span class="v amb">${fmtP(m.liq)} <span class="mut">(${m.liqDist > 0 ? (m.liqDist * 100).toFixed(2) + '% away' : 'passed'})</span></span>
+        <span class="k">Stop</span><span class="v dn">${stopTxt}</span>
+        <span class="k">T1 · 1.5R / T2 · 3R</span><span class="v up">${fmtP(rec.T1)} / ${fmtP(rec.T2)}</span>${tpTxt}
+        <span class="k">R progress</span><span class="v">${rTxt}</span>
+        <span class="k">Est. fees (round trip)</span><span class="v">${usdF(m.fees)} <span class="mut">not in P&amp;L</span></span>
+      </div>${lev}${closer}${acts}</div>`;
+  }
+  function formHtml() {
+    const f = T.form, opt = (arr, v) => arr.map(a => `<option value="${a}"${a === v ? ' selected' : ''}>${a}</option>`).join('');
+    return `<div class="tform" id="tForm">
+      <div class="tfh">${f.id ? 'Edit trade' : 'Add a trade'} <span class="mut">· recorded on this device only; the app never places orders</span></div>
+      <div class="tgrid">
+        <label>Coin<select id="tfSym">${opt(Object.keys(SYMBOLS), f.sym)}</select></label>
+        <div class="lbl2">Direction<div class="tdir"><button type="button" data-dir="1" class="${f.dir === 1 ? 'on L' : ''}" aria-pressed="${f.dir === 1}">▲ Long</button><button type="button" data-dir="-1" class="${f.dir === -1 ? 'on S' : ''}" aria-pressed="${f.dir === -1}">▼ Short</button></div></div>
+        <label>Margin (USD)<input id="tfMargin" type="number" inputmode="decimal" min="0" step="any" value="${f.margin ?? ''}" placeholder="100" enterkeyhint="next"></label>
+        <label>Leverage ×<input id="tfLev" type="number" inputmode="numeric" min="1" max="125" step="1" value="${f.lev ?? ''}" placeholder="10" enterkeyhint="next"></label>
+        <div class="tquick full">${TQUICK.map(q => `<button type="button" data-lev="${q}" class="${+f.lev === q ? 'on' : ''}">x${q}</button>`).join('')}</div>
+        <label class="full">Entry price<span class="tentry"><input id="tfEntry" type="number" inputmode="decimal" min="0" step="any" value="${f.entry ?? ''}" enterkeyhint="next"><button type="button" class="aiB" id="tfLive" title="Use the current live price">Live price</button></span></label>
+        <label>Timeframe (optional)<select id="tfTf">${opt(MAIN_TFS, f.tf)}</select></label>
+        <span></span>
+        <label>Stop-loss (optional)<input id="tfSl" type="number" inputmode="decimal" min="0" step="any" value="${f.sl ?? ''}" placeholder="none" enterkeyhint="next"></label>
+        <label>Take-profit (optional)<input id="tfTp" type="number" inputmode="decimal" min="0" step="any" value="${f.tp ?? ''}" placeholder="none" enterkeyhint="done"></label>
+      </div>
+      <div class="tprev" id="tfPrev"></div>
+      <div class="terr" id="tfErr" role="alert">${esc(T.err)}</div>
+      <div class="tacts"><button class="aiB pri" id="tfSave">${f.id ? 'Save changes' : 'Add trade'}</button><button class="aiB" id="tfCancel">Cancel</button></div>
+    </div>`;
+  }
+  function readForm() {
+    const v = id => { const x = parseFloat($(id).value); return fin(x) ? x : null; };
+    return { ...T.form, sym: $('tfSym').value, margin: v('tfMargin'), lev: v('tfLev'), entry: v('tfEntry'), tf: $('tfTf').value, sl: v('tfSl'), tp: v('tfTp') };
+  }
+  function validate(f) {
+    if (!SYMBOLS[f.sym]) return 'Pick a coin.';
+    if (!(f.margin > 0)) return 'Enter the margin in USD (more than 0).';
+    if (!(f.lev >= 1 && f.lev <= 125)) return 'Leverage must be between 1 and 125.';
+    if (!(f.entry > 0)) return 'Enter the entry price.';
+    if (f.sl != null && !(f.sl > 0)) return 'Stop-loss must be a positive price (or leave it empty).';
+    if (f.tp != null && !(f.tp > 0)) return 'Take-profit must be a positive price (or leave it empty).';
+    if (f.tp != null && (f.tp - f.entry) * f.dir <= 0) return `For a ${f.dir === 1 ? 'long' : 'short'}, the take-profit must be ${f.dir === 1 ? 'above' : 'below'} the entry.`;
+    if (f.sl != null && f.tp != null && (f.tp - f.sl) * f.dir <= 0) return 'The stop-loss must be on the other side of the take-profit.';
+    return '';
+  }
+  function formPreview() {
+    const f = readForm(), el = $('tfPrev'); if (!el) return;
+    if (!(f.margin > 0 && f.lev >= 1 && f.lev <= 125 && f.entry > 0)) { el.innerHTML = '<span class="mut">Enter margin, leverage and entry to preview size and liquidation.</span>'; return; }
+    const m = Trades.metrics({ ...f, lev: Math.round(f.lev) }, f.entry);
+    el.innerHTML = `Position <b>${usdF(m.notional, 0)}</b> (${qtyF(m.qty)} ${f.sym}) · est. liquidation <b class="amb">${fmtP(m.liq)}</b> — a <b>${(m.liqMove * 100).toFixed(2)}%</b> move against you${f.sl > 0 && (f.dir === 1 ? f.sl <= m.liq : f.sl >= m.liq) ? ' · <span class="dn">your stop is beyond liquidation</span>' : ''}`;
+  }
+  async function openForm(t) {
+    T.err = ''; T.closing = null; T.formN++;
+    if (t) T.form = { ...t };
+    else { T.form = { sym: S.sym, dir: 1, margin: '', lev: 10, entry: S.data && fin(S.data.fut.last) ? +S.data.fut.last.toPrecision(8) : '', tf: S.tf, sl: null, tp: null }; }
+    renderTrades(); const tf = $('tForm'); if (tf && isPhone()) tf.scrollIntoView({ block: 'start' });
+    if (!t && !T.form.entry) fillLive();
+  }
+  async function fillLive() { const sym = $('tfSym') ? $('tfSym').value : T.form.sym, p = await livePrice(sym); if (fin(p) && $('tfEntry') && $('tfSym').value === sym) { $('tfEntry').value = +p.toPrecision(8); formPreview(); } }
+  function saveForm() {
+    const f = readForm(); f.lev = f.lev != null ? Math.round(f.lev) : f.lev;
+    const e = validate(f); if (e) { T.err = e; $('tfErr').textContent = e; return; }
+    const st = tLoad(), rec = { id: f.id || 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), sym: f.sym, dir: f.dir, margin: f.margin, lev: f.lev, entry: f.entry, tf: f.tf, sl: f.sl, tp: f.tp, openedAt: f.openedAt || Date.now() };
+    const k = st.open.findIndex(x => x.id === rec.id); if (k >= 0) st.open[k] = rec; else st.open.unshift(rec);
+    tSave(st); T.form = null; T.err = ''; renderTrades(); updateTrades();
+  }
+  function closeTrade(id) {
+    const st = tLoad(), t = st.open.find(x => x.id === id), exit = parseFloat($('tcExit') && $('tcExit').value);
+    if (!t || !(exit > 0)) { if ($('tcPrev')) $('tcPrev').textContent = 'Enter a valid exit price.'; return; }
+    const r = Trades.closePnl(t, exit);
+    st.open = st.open.filter(x => x.id !== id); st.history.unshift({ ...t, exit, closedAt: Date.now(), pnl: r.pnl, roe: r.roe }); st.history = st.history.slice(0, 200);
+    tSave(st); T.closing = null; renderTrades();
+  }
+  function renderTrades() {
+    const el = $('tab-trades'); if (!el) return;
+    if (!$('tTop')) el.innerHTML = `<div id="tMsg"></div><div id="tTop" class="tbar"></div><div id="tFormBox"></div><div id="tList"></div>
+      <p class="tdisc">Recommendations come from this app's rules (the same signal engine as the verdict card, normal mode) and are not guaranteed — the backtests show roughly break-even results. Liquidation prices are estimates (isolated margin, ${(Engine.CFG.mmr * 100).toFixed(1)}% maintenance margin; your exchange's tiers, fees and funding differ). The app never places or closes trades; you decide.</p><div id="tHist"></div>`;
+    const st = tLoad(), an = st.open.map(tAnalysis), tot = an.reduce((a, A) => a + (A ? A.rec.m.pnl : 0), 0), anyA = an.some(Boolean);
+    const realized = st.history.reduce((a, h) => a + h.pnl, 0);
+    $('tTop').innerHTML = `<div><b>${st.open.length}</b> open trade${st.open.length === 1 ? '' : 's'}${st.open.length && anyA ? ` · unrealized <b class="${tot >= 0 ? 'up' : 'dn'}">${sgnUsd(tot)}</b>` : ''}${st.history.length ? ` · realized <b class="${realized >= 0 ? 'up' : 'dn'}">${sgnUsd(realized)}</b>` : ''}</div>${T.form ? '' : '<button class="aiB pri" id="tAdd">+ Add trade</button>'}`;
+    // the form is only rebuilt when it is opened/closed/switched, so live refreshes never interrupt typing
+    const fk = T.form ? (T.form.id || 'new') + ':' + T.formN : null, box = $('tFormBox');
+    if (box.dataset.k !== (fk || '')) { box.dataset.k = fk || ''; box.innerHTML = T.form ? formHtml() : ''; if (T.form) wireForm(); }
+    // keep a half-typed exit price (and focus) across live re-renders of the list
+    const ce0 = $('tcExit'), keep = ce0 ? { v: ce0.value, f: document.activeElement === ce0 } : null;
+    $('tList').innerHTML = st.open.length ? `<div class="tlist">${st.open.map(tradeCard).join('')}</div>` : T.form ? '' : `<p class="note">Log a position you've opened on your exchange (for example <b>$100 at x50 long BTC</b>). You'll get live P&amp;L, an estimated liquidation price, leverage warnings and a rules-based recommendation that updates on every refresh. Nothing leaves this device.</p>`;
+    const ce = $('tcExit');
+    if (ce) {
+      if (keep) { ce.value = keep.v; if (keep.f) ce.focus(); }
+      const upd = () => { const t = st.open.find(x => x.id === T.closing), v = parseFloat(ce.value); $('tcPrev').innerHTML = t && v > 0 ? (r => `P&amp;L <b class="${r.pnl >= 0 ? 'up' : 'dn'}">${sgnUsd(r.pnl)}</b> (${sgnPct(r.roe, 1)} ROE)`)(Trades.closePnl(t, v)) : ''; };
+      ce.oninput = upd; upd();
+    }
+    const hist = st.history.map(h => `<tr><td data-l="Trade"><b>${h.sym}</b> <span class="${h.dir === 1 ? 'up' : 'dn'}">${h.dir === 1 ? 'LONG' : 'SHORT'}</span> x${h.lev}</td><td data-l="Entry → exit" class="mono">${fmtP(h.entry)} → ${fmtP(h.exit)}</td><td data-l="Margin" class="mono">${usdF(h.margin)}</td><td data-l="P&amp;L" class="mono ${h.pnl >= 0 ? 'up' : 'dn'}">${sgnUsd(h.pnl)} <span class="mut">(${sgnPct(h.roe, 1)})</span></td><td data-l="Closed" class="mut">${new Date(h.closedAt).toLocaleString([], { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td><td class="hx"><button class="aiB sm" data-tact="hdel" data-id="${h.id}" aria-label="Remove from history">✕</button></td></tr>`).join('');
+    $('tHist').innerHTML = st.history.length ? `<div class="thh">History (${st.history.length}) <button class="aiB sm" id="tHistClear">${T.delArm === 'hist' ? 'Tap again to clear' : 'Clear history'}</button></div><table class="trades thist"><thead><tr><th>Trade</th><th>Entry → exit</th><th>Margin</th><th>P&amp;L</th><th>Closed</th><th></th></tr></thead><tbody>${hist}</tbody></table>` : '';
+  }
+  function wireForm() {
+    const f = $('tForm');
+    f.querySelector('.tdir').onclick = e => { const b = e.target.closest('button'); if (!b) return; T.form = readForm(); T.form.dir = +b.dataset.dir; f.querySelectorAll('.tdir button').forEach(x => { const on = +x.dataset.dir === T.form.dir; x.className = on ? 'on ' + (T.form.dir === 1 ? 'L' : 'S') : ''; x.setAttribute('aria-pressed', on); }); formPreview(); };
+    f.querySelector('.tquick').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('tfLev').value = b.dataset.lev; f.querySelectorAll('.tquick button').forEach(x => x.classList.toggle('on', x === b)); formPreview(); };
+    $('tfLev').oninput = () => { f.querySelectorAll('.tquick button').forEach(x => x.classList.toggle('on', +x.dataset.lev === +$('tfLev').value)); formPreview(); };
+    ['tfMargin', 'tfEntry', 'tfSl'].forEach(id => $(id).oninput = formPreview);
+    $('tfSym').onchange = () => { $('tfEntry').value = ''; formPreview(); fillLive(); };
+    $('tfLive').onclick = fillLive; $('tfSave').onclick = saveForm; $('tfCancel').onclick = () => { T.form = null; T.err = ''; renderTrades(); };
+    formPreview();
+  }
+  function tradePrompt(t, A) {
+    const r = A.rec, m = r.m, L = t.dir === 1;
+    const lines = [
+      `Review my open trade and give me a recommendation (hold, take partial profit, tighten the stop, or close), with your reasons and the price levels that matter. I decide; don't promise outcomes.`,
+      ``,
+      `Trade: ${t.sym}-USDT perpetual ${L ? 'LONG' : 'SHORT'}, $${t.margin} margin at x${t.lev} (position ${usdF(m.notional, 0)}, ${qtyF(m.qty)} ${t.sym}), entry ${fmtP(t.entry)}, based on the ${t.tf} chart.`,
+      `Now: price ${fmtP(A.price)} (${sgnPct(m.chg)} since entry), unrealized P&L ${sgnUsd(m.pnl)} (${sgnPct(m.roe, 1)} ROE, before fees/funding).`,
+      `Estimated liquidation: ${fmtP(m.liq)} (${(m.liqDist * 100).toFixed(2)}% from the current price; a ${(m.liqMove * 100).toFixed(2)}% move from entry).`,
+      `Stop: ${r.stopIsUser ? fmtP(t.sl) + ' (mine)' : 'none set; app suggests ' + fmtP(A.sug.stop) + ' (ATR-based)'}. Targets: T1 ${fmtP(r.T1)} (1.5R), T2 ${fmtP(r.T2)} (3R)${t.tp > 0 ? `; my take-profit ${fmtP(t.tp)}` : ''}.${r.safeLev && r.safeLev < t.lev ? ` Leverage at which the ATR stop sits inside liquidation: x${r.safeLev}.` : ''}`,
+      `App signal on ${t.tf}: ${VW(A.ev.vkey)} (score ${A.ev.score > 0 ? '+' : ''}${A.ev.score}, ${A.ev.confidence} confidence, market: ${A.ev.cond.label}).`,
+      A.ev.vkey === 'NOTRADE' ? `Why no trade: ${A.ev.blocks.slice(0, 3).join('; ')}.` : `Top reasons: ${A.ev.factors.filter(f => Math.sign(f.val) === A.ev.dir && f.val).sort((a, c) => Math.abs(c.val) - Math.abs(a.val)).slice(0, 3).map(f => f.reason).join('; ')}.`,
+      `Timeframe dots (${t.sym}): ${A.dots.map(d => `${d.tf} ${VW(d.vkey)}`).join(' · ')}.`,
+      `App's rules-based recommendation: ${r.action} — ${r.reasons.join(' ')}`,
+      `Leverage warnings: ${r.warnings.map(w => w.text).join(' ')}`,
+    ];
+    const ctx = { symbol: t.sym + '-USDT perpetual', direction: L ? 'LONG' : 'SHORT', marginUsd: t.margin, leverage: t.lev, entry: t.entry, timeframe: t.tf, stopLoss: t.sl || null, takeProfit: t.tp || null,
+      currentPrice: rp(A.price), unrealizedPnlUsd: r2(m.pnl), roePct: r2(m.roe * 100, 1), priceChangeSinceEntryPct: r2(m.chg * 100), estLiquidationPrice: rp(m.liq), distanceToLiquidationPct: r2(m.liqDist * 100),
+      suggestedAtrStop: rp(A.sug.stop), t1: rp(r.T1), t2: rp(r.T2), rMultipleNow: r2(r.rNow), saferLeverage: r.safeLev, atr: rp(A.atr),
+      signal: { timeframe: t.tf, verdict: VW(A.ev.vkey), score: A.ev.score, confidence: A.ev.confidence, marketCondition: A.ev.cond.label, dontTradeReasons: A.ev.vkey === 'NOTRADE' ? A.ev.blocks : [], factors: A.ev.factors.map(f => ({ factor: f.label, points: f.val, reason: f.reason })) },
+      timeframeDots: Object.fromEntries(A.dots.map(d => [d.tf, VW(d.vkey)])), appRecommendation: { action: r.action, reasons: r.reasons }, leverageWarnings: r.warnings.map(w => w.text) };
+    return { text: lines.join('\n'), ctx, label: `Ask AI about my ${t.sym} ${L ? 'long' : 'short'} x${t.lev}` };
+  }
+  function askAiTrade(id) {
+    const t = tLoad().open.find(x => x.id === id), A = t && tAnalysis(t); if (!t) return;
+    if (!A || !S.data) { alertTrades('Live data for this trade is still loading — try again in a moment.'); return; }
+    const P = tradePrompt(t, A);
+    S.aiTrade = { ctx: P.ctx, label: P.label };
+    window.__showTab('ai');
+    $('aiQ').value = P.text; $('aiQ').rows = isPhone() ? 8 : 10; renderAiTradeChip();
+    $('aiQ').scrollIntoView({ block: 'center' }); if (!isPhone()) $('aiQ').focus();
+  }
+  function alertTrades(msg) { const n = $('tMsg'); if (n) { n.className = 'terr'; n.textContent = msg; setTimeout(() => { n.textContent = ''; }, 6000); } }
+  function renderAiTradeChip() {
+    const box = $('aiTradeChip'); if (!box) return;
+    const c = aiCfg();
+    box.innerHTML = S.aiTrade ? `<span>📎 Trade context attached: <b>${esc(S.aiTrade.label.replace('Ask AI about my ', ''))}</b> — review the prompt, then tap Send.${c.key ? '' : ' <span class="amb">No API key saved: the rules-based recommendation in My trades works without one.</span>'}</span><button class="aiB sm" id="aiTradeX" aria-label="Detach trade context">✕</button>` : '';
+    box.classList.toggle('hidden', !S.aiTrade);
+    const x = $('aiTradeX'); if (x) x.onclick = () => { S.aiTrade = null; renderAiTradeChip(); };
+  }
+  $('tab-trades').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'tAdd') return openForm(null);
+    if (b.id === 'tHistClear') { if (T.delArm === 'hist') { const st = tLoad(); st.history = []; tSave(st); T.delArm = null; } else { T.delArm = 'hist'; setTimeout(() => { if (T.delArm === 'hist') { T.delArm = null; renderTrades(); } }, 4000); } return renderTrades(); }
+    const a = b.dataset.tact, id = b.dataset.id; if (!a) return;
+    const st = tLoad();
+    if (a === 'ai') return askAiTrade(id);
+    if (a === 'edit') return openForm(st.open.find(x => x.id === id));
+    if (a === 'close') { T.closing = id; T.delArm = null; renderTrades(); const ce = $('tcExit'); if (ce) ce.scrollIntoView({ block: 'center' }); return; }
+    if (a === 'closeCancel') { T.closing = null; return renderTrades(); }
+    if (a === 'closeOk') return closeTrade(id);
+    if (a === 'del') {
+      if (T.delArm === id) { st.open = st.open.filter(x => x.id !== id); tSave(st); T.delArm = null; if (T.closing === id) T.closing = null; }
+      else { T.delArm = id; setTimeout(() => { if (T.delArm === id) { T.delArm = null; renderTrades(); } }, 4000); }
+      return renderTrades();
+    }
+    if (a === 'hdel') { st.history = st.history.filter(x => x.id !== id); tSave(st); return renderTrades(); }
+  });
+  $('tradesBtn').onclick = () => { window.__showTab('trades'); $('tabsCard').scrollIntoView({ block: 'start' }); };
+  window.__trades = { list: () => tLoad(), clear: () => { localStorage.removeItem(TKEY); T.form = null; tBadge(); renderTrades(); }, analysis: id => { const t = tLoad().open.find(x => x.id === id); return t && tAnalysis(t); }, update: () => updateTrades(), busy: () => T.busy, prompt: id => { const t = tLoad().open.find(x => x.id === id), A = t && tAnalysis(t); return A && tradePrompt(t, A); } };
 
   /* ---------- backtest off the main thread (Web Worker built from the inlined engine source) ---------- */
   let worker = null, workerOk = null, wid = 0; const pending = new Map();
@@ -1886,6 +2324,7 @@ Rules:
       $('upd').textContent = D.at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       $('overlay').classList.add('hidden');
       setTitle(D); publish(D);
+      if (tLoad().open.length) updateTrades();
       S.loading = false; S.countdown = REFRESH_SEC;
       background(D, { sym, tfKey, tf, ltf, htf, top, futE, btKey });
     } catch (e) {
@@ -1940,11 +2379,11 @@ Rules:
   $('modeBtn').onclick = () => setMode(S.mode === 'aplus' ? 'normal' : 'aplus');
   $('aiBtn').onclick = () => setAI(!S.ai);
   $('tabs').onclick = e => {
-    const t = e.target.closest('button')?.dataset.tab; if (!t) return; S.tab = t;
+    const t = e.target.closest('button')?.dataset.tab; if (!t) return; S.tab = t; localStorage.setItem('fst_tab', t === 'trades' ? 'trades' : '');
     [...$('tabs').children].forEach(b => { b.classList.toggle('on', b.dataset.tab === t); b.setAttribute('aria-selected', b.dataset.tab === t); });
     const tb = $('tabs'), on = tb.querySelector('.on'); if (on) { const l = on.offsetLeft, r = l + on.offsetWidth; if (l < tb.scrollLeft) tb.scrollLeft = l - 8; else if (r > tb.scrollLeft + tb.clientWidth) tb.scrollLeft = r - tb.clientWidth + 8; }
     Object.keys(TAB_RENDER).forEach(k => $('tab-' + k).classList.toggle('hidden', k !== t));
-    renderActiveTab(t === 'backtest');
+    renderActiveTab(t === 'backtest' || t === 'trades'); if (t === 'trades') updateTrades();
     if (isPhone()) { const tc = $('tabsCard'); if (tc.getBoundingClientRect().top < 0) tc.scrollIntoView({ block: 'start' }); }
   };
   $('chartBar').onclick = e => {
@@ -1976,7 +2415,8 @@ Rules:
   });
   window.addEventListener('online', () => load(false));
 
-  buildControls(); renderPlaybook(); initChart(); renderMTF(); load(true);
+  buildControls(); renderPlaybook(); initChart(); renderMTF(); tBadge(); load(true);
+  if (localStorage.getItem('fst_tab') === 'trades') window.__showTab('trades');
   window.__ticks = 0;
   setInterval(() => {
     if (document.hidden) return;
