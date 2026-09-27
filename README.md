@@ -71,6 +71,25 @@ Fallback logic: every candle request tries OKX first and falls back to Gate.io o
 backoff first). The header shows which source is live ("Live · OKX" or "Live · Gate.io (fallback)"). Because both work
 directly from the browser, no proxy server is needed.
 
+### Refresh and rate limits
+
+The first load of a coin/timeframe fetches full history (1,200 bars + higher timeframes; the backtest's 3,000-bar history
+loads in the background and is cached 30 min). After that, each 10 s refresh fetches only:
+
+* the newest 100 candles of the current timeframe (1 request, merged into the cached series by timestamp; a full reload
+  happens only on a gap or an error, and every 10 min while on the Gate.io fallback so OKX gets retried), and
+* the ticker (1 request) for the price and 24 h change.
+
+Slower data refreshes on its own clock, also incrementally: higher-timeframe candles and positioning (funding, funding
+history, open interest, Gate.io OI history / long-short ratio: 7 requests) every 60 s, and the multi-timeframe strip every
+90 s. Each coin with an open trade adds 1 ticker per refresh plus the same 60/90 s updates. A tick is skipped if the previous
+refresh (or its background multi-timeframe/history fetch, or the trades update) is still running, so requests never pile
+up, and the timer pauses while the tab/app is hidden. Measured over a 2-minute run (`tests/refresh_test.py`, desktop and
+iPhone 14 open at the same time from one IP): usually 2 requests per refresh (3 with one open trade on another coin),
+4–11 on the refreshes where the 60/90 s data comes due, about 3–6 requests per 10 s on average, no HTTP 429s. OKX public
+limits are 40 req/2 s for candles, 20/2 s for ticker, history-candles and open interest, and 10/2 s for funding endpoints;
+Gate.io public endpoints allow about 200 req/10 s.
+
 ## Features
 
 * Symbols BTC/ETH/SOL/XRP/DOGE/BNB perps, timeframes 15m/1h/4h/1d (higher-timeframe filter = 1h/4h/1d/1w respectively).
@@ -81,7 +100,8 @@ directly from the browser, no proxy server is needed.
   regression slope, 20-bar high/low, confirmed swing pivots.
 * Futures data: current funding (+ 8h-equivalent and annualized), next funding time, 30-settlement funding history,
   open interest (OKX), 24h OI change, account long/short ratio, top-trader L/S, 24h long/short liquidations (Gate.io).
-* Auto-refresh every 45 s with last-updated time + countdown; settings persist in localStorage.
+* Auto-refresh every 10 s with last-updated time + countdown; settings persist in localStorage. Refreshes are incremental and
+  never overlap (see *Refresh and rate limits* below).
 
 ## How the signal engine works
 
@@ -138,7 +158,7 @@ psychology).
 ## Backtest and honest statistics
 
 Up to **3,000 candles** per symbol/timeframe (OKX `market/candles` gives the latest 1,440, older bars come from
-`history-candles`, 100 per page, throttled; cached 30 min). The engine is replayed bar by bar after a 210-bar warm-up using
+`history-candles`, 100 per page, spaced 250 ms apart so two tabs on one IP stay under OKX's 20 req/2 s; cached 30 min). The engine is replayed bar by bar after a 210-bar warm-up using
 only data available at each bar (HTF/daily filters use closed bars only). Entry next bar open; stop/targets as above; 50 %
 off at TP1 (1.5R) and stop to breakeven, rest at TP2 (3R); 60-bar time stop; stop assumed first if both hit in one bar.
 Costs 0.05 % fee + 0.02 % slippage per side; funding payments not modelled; positioning factors excluded (no free history).
@@ -163,7 +183,7 @@ form previews the position size and the estimated liquidation. Trades are saved 
 (`fst_trades`); you can have several open, edit them, close one (enter the exit price → it moves to a history list with its
 P&L), or delete (tap twice). The app never places, changes or closes orders on any exchange.
 
-Each open trade updates on every refresh (45 s):
+Each open trade updates on every refresh (10 s):
 * position size (margin × leverage) and coin quantity; unrealized P&L in $ and ROE %; price change since entry;
   estimated round-trip fees (not included in P&L; funding is not included either);
 * **estimated liquidation price** — isolated margin with the same formula as the trade plan,
@@ -257,6 +277,14 @@ tested for any provider (no key available) — the UI flow was tested with a moc
   through the form (live-price prefill, x50 quick button, validation), recommendation badge + reasons + warnings, no console
   errors, no horizontal overflow, tap targets ≥ 44 px, persistence after reload, Ask-AI prefill (no key → clear message),
   edit, close → history, delete. `tests/trades_ui_results.json`.
+* `tests/header_test.py` (Playwright; iPhone 14, iPhone SE, 280 px fold, installed-style iPhone 14 portrait + landscape
+  with safe-area insets via CDP, desktop 1440; a sample trade is injected so the count shows): the My trades button is in
+  normal flow, same height as its neighbouring controls, its label fits, and its box + text don't intersect any other visible
+  header or scripture-banner element; header blocks (brand, price, symbol/timeframe rows, stats) don't overlap each other.
+  `tests/header_results.json`, screenshots `screenshots/mobile/13_header_my_trades_*.png`, `screenshots/13_header_my_trades_desktop.png`.
+* `tests/refresh_test.py` (Playwright, ≥ 2 min on desktop 1440 + iPhone 14 at once): refresh interval, requests per refresh by
+  endpoint, peak requests per endpoint in any 2 s window vs the OKX limits, HTTP 429s, skipped ticks, console errors, and no
+  requests while the page is hidden. `tests/refresh_results.json`.
 * `tests/browser_test.py` (desktop 1440×900 + screenshots), `tests/scan_all.py` + `tests/summarize.py` (all 24 combos →
   `tests/filter_comparison.md`), `tests/fallback_test.py` (OKX blocked → Gate.io), `tests/file_test.py` (`file://`).
 

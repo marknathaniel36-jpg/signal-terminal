@@ -39,7 +39,8 @@ header{display:flex;align-items:center;gap:12px;padding:8px calc(12px + var(--sa
 .tick{display:flex;align-items:baseline;gap:10px;margin-left:4px;grid-area:tick}.tick .px{font:700 18px var(--mono)}.tick .ch{font:600 12px var(--mono)}
 .vpill{align-self:center;font:800 11px var(--sans);letter-spacing:.05em;padding:3px 8px;border-radius:5px;color:#fff;background:var(--nSolid);white-space:nowrap}
 .vpill.LONG{background:var(--gSolid)}.vpill.SHORT{background:var(--rSolid)}
-.hstat{margin-left:auto;display:flex;gap:11px;align-items:center;font-size:11.5px;color:var(--mut);flex-wrap:wrap;grid-area:stats}
+.hright{margin-left:auto;display:flex;align-items:center;gap:11px;min-width:0;grid-area:stats}
+.hstat{display:flex;gap:11px;align-items:center;font-size:11.5px;color:var(--mut);flex-wrap:wrap;grid-area:stats}
 .hstat b{color:var(--txt);font-weight:600}.dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--dim);margin-right:5px}
 .dot.live{background:var(--green);box-shadow:0 0 8px var(--green)}.dot.err{background:var(--red)}.dot.paused{background:var(--amber)}
 .btn{background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px}.btn:hover{border-color:var(--blue)}
@@ -178,7 +179,7 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
 @media (prefers-reduced-motion:reduce){.verse .vl{transition:none}}
 
 /* ================= My trades ================= */
-.tbtn{font-weight:600;color:var(--txt);white-space:nowrap}.tbtn b,.tcount{font:700 11px var(--mono);color:#0a0e15;background:#f5d061;border-radius:9px;padding:0 5px;margin-left:5px}.tbtn b:empty,.tcount:empty{display:none}
+.tbtn{font-weight:600;color:var(--txt);white-space:nowrap;flex:none;display:inline-flex;align-items:center;justify-content:center}.tbtn b,.tcount{font:700 11px var(--mono);color:#0a0e15;background:#f5d061;border-radius:9px;padding:0 5px;margin-left:5px}.tbtn b:empty,.tcount:empty{display:none}
 .tbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
 .tform{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:12px;margin-bottom:12px}
 .tfh{font-weight:700;color:#fff;margin-bottom:10px;font-size:13.5px}.tfh .mut{font-weight:400;font-size:11.5px}
@@ -219,7 +220,10 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
 .thist td{font-size:12.5px}.thist td.hx{text-align:right;width:40px}
 .aiChip{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:#c9d3df;background:rgba(245,208,97,.07);border:1px solid rgba(245,208,97,.3);border-radius:8px;padding:6px 9px;margin-bottom:6px}
 @media (max-width:1024px){
-  .tbtn{font-size:13px!important;padding:0 12px}
+  /* phones: the stats strip scrolls; the button is its own non-shrinking item on the same row, styled like the symbol pills */
+  .hright{margin:0;gap:8px;flex-wrap:wrap}
+  .hright .hstat{flex:1 1 160px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent)}
+  .tbtn{order:2;margin-left:auto;min-height:44px;padding:0 14px;border-radius:22px;background:var(--panel);border:1px solid var(--line);font:600 14px var(--sans)!important}
   .tgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.tgrid .full{grid-column:1 / -1}
   .tgrid input,.tgrid select,.tclose input{font-size:16px;min-height:44px}
   .tdir button,.tquick button{min-height:44px;font-size:14px}
@@ -298,6 +302,10 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
   table.cmp td:not(:first-child)::before{content:attr(data-l);display:block;font:700 9.5px var(--sans);color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
   .notes p{font-size:15px}
 }
+@media (max-width:340px){
+  header{grid-template-areas:"brand brand" "tick tick" "sym sym" "tf tf" "stats stats"}
+  .tick{justify-content:flex-start}
+}
 @media (max-width:1024px) and (orientation:landscape) and (max-height:520px){
   #chartWrap{height:calc(100vh - 70px)}
   header{position:relative}
@@ -310,13 +318,15 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
   <div class="seg" id="symSeg" role="tablist" aria-label="Symbol"></div>
   <div class="seg" id="tfSeg" role="tablist" aria-label="Timeframe"></div>
   <div class="tick"><span class="px mono" id="px">—</span><span class="ch" id="ch24">—</span><span class="vpill" id="vPill">—</span><span class="mut" style="font-size:11px" id="pxLabel"></span></div>
+  <div class="hright">
+  <button class="btn tbtn" id="tradesBtn" type="button" title="My trades: log your positions for live P&amp;L and recommendations">My trades<b id="tradesN"></b></button>
   <div class="hstat">
-    <button class="btn tbtn" id="tradesBtn" title="My trades: log your positions for live P&amp;L and recommendations">My trades<b id="tradesN"></b></button>
     <span>Funding <b class="mono" id="hFund">—</b></span>
     <span>OI 24h <b class="mono" id="hOi">—</b></span>
     <span><span class="dot" id="dot"></span><span id="srcTxt">connecting…</span></span>
     <span>Upd <b class="mono" id="upd">—</b> · next <b class="mono" id="cd">—</b></span>
     <button class="btn" id="refreshBtn" title="Refresh now" aria-label="Refresh now">↻</button>
+  </div>
   </div>
 </header>
 <div class="verse" id="verseBar" role="region" aria-label="Scripture on wealth and stewardship (KJV)">
@@ -1289,11 +1299,14 @@ const Trades = (() => {
     '1w': { okx: '1Wutc', gate: '7d', sec: 604800 },
   };
   const MAIN_TFS = ['15m', '1h', '4h', '1d'];
-  const LTF_BARS = 1200, HTF_BARS = 600, TOP_BARS = 400, MTF_BARS = 600, DEEP_BARS = 3000, REFRESH_SEC = 45, MTF_TTL = 90e3, DEEP_TTL = 30 * 60e3;
+  const LTF_BARS = 1200, HTF_BARS = 600, TOP_BARS = 400, MTF_BARS = 600, DEEP_BARS = 3000, REFRESH_SEC = 10, MTF_TTL = 90e3, DEEP_TTL = 30 * 60e3;
+  // 10 s refresh budget: each tick fetches only the newest candles (1 request, 100 bars) + the ticker (1 request); positioning data
+  // (funding, OI, L/S), higher-timeframe candles and the multi-timeframe strip refresh every 60–90 s, also incrementally.
+  const SLOW_TTL = 60e3, LATEST_BARS = 100, FULL_EVERY = 10 * 60e3;
   const TZ_SHIFT = -new Date().getTimezoneOffset() * 60; // display chart times in local time
   const NT = "DON'T TRADE";
   const S = { sym: localStorage.getItem('fst_sym') || 'BTC', tf: localStorage.getItem('fst_tf') || '1h', mode: localStorage.getItem('fst_mode') === 'aplus' ? 'aplus' : 'normal',
-    loading: false, loadSeq: 0, lastKey: null, data: null, countdown: REFRESH_SEC, lastLoadAt: 0,
+    loading: false, bg: 0, loadSeq: 0, lastKey: null, data: null, countdown: REFRESH_SEC, lastLoadAt: 0,
     tab: 'breakdown', rendered: {}, ai: localStorage.getItem('fst_ai') === '1', chat: [], aiBusy: false, ver: 0, mtf: {}, candleCache: {}, deepCache: {}, btCache: new Map(), feedError: null,
     show: { rsi: localStorage.getItem('fst_rsi') !== '0', macd: localStorage.getItem('fst_macd') !== '0', chop: localStorage.getItem('fst_chop') !== '0' } };
   if (!SYMBOLS[S.sym]) S.sym = 'BTC'; if (!MAIN_TFS.includes(S.tf)) S.tf = '1h';
@@ -1354,9 +1367,22 @@ const Trades = (() => {
     }
   }
   // market/candles serves the most recent 1,440 bars (300/page); older bars come from history-candles (100/page, 20 req/2s)
-  // history-candles pages from every concurrent load share one queue spaced 130 ms apart (<= ~15 req/2s, under OKX's 20/2s)
+  // history-candles pages from every concurrent load share one queue spaced 250 ms apart (<= 9 req/2s per tab, so even two
+  // open tabs/devices on one IP stay under OKX's 20/2s)
   let histQ = Promise.resolve();
-  const histSlot = () => { const turn = histQ; histQ = histQ.then(() => sleep(130)); return turn; };
+  const histSlot = () => { const turn = histQ; histQ = histQ.then(() => sleep(250)); return turn; };
+  const okxRow = r => ({ t: +r[0] / 1000, o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[6], closed: r[8] === '1' });
+  const gateRows = (j, sec) => { const now = Date.now() / 1000; return j.map(r => ({ t: +r.t, o: +r.o, h: +r.h, l: +r.l, c: +r.c, v: (+r.sum || 0) / (+r.c || 1), closed: +r.t + sec <= now })).sort((a, b) => a.t - b.t); };
+  // newest LATEST_BARS candles only (one request) — used by every refresh after the first full load
+  async function latestCandles(sym, tfKey, src) {
+    const tf = TFS[tfKey], s = SYMBOLS[sym];
+    if (src === 'OKX') {
+      const j = await getJSON(`https://www.okx.com/api/v5/market/candles?instId=${s.okx}&bar=${tf.okx}&limit=${LATEST_BARS}`, 8000, 1);
+      if (j.code !== '0') throw new Error('OKX ' + j.msg); return j.data.map(okxRow).sort((a, b) => a.t - b.t);
+    }
+    const j = await getJSON(`https://api.gateio.ws/api/v4/futures/usdt/candlesticks?contract=${s.gate}&interval=${tf.gate}&limit=${LATEST_BARS}`, 8000, 1);
+    if (!Array.isArray(j)) throw new Error('Gate: bad candle reply'); return gateRows(j, tf.sec);
+  }
   async function okxCandles(inst, bar, count, sec) {
     let rows = [], after = '', hist = false;
     while (rows.length < count) {
@@ -1369,7 +1395,7 @@ const Trades = (() => {
       if (hist) { /* spacing handled by histSlot() */ } else if (j.data.length < lim && rows.length < 1400) break; else await sleep(60);
     }
     const m = new Map();
-    rows.forEach(r => m.set(+r[0], { t: +r[0] / 1000, o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[6], closed: r[8] === '1' }));
+    rows.forEach(r => m.set(+r[0], okxRow(r)));
     const out = [...m.values()].sort((a, b) => a.t - b.t);
     if (out.length < 60) throw new Error('OKX: too few candles');
     return out.slice(-count);
@@ -1377,8 +1403,7 @@ const Trades = (() => {
   async function gateCandles(contract, interval, count, sec) {
     const j = await getJSON(`https://api.gateio.ws/api/v4/futures/usdt/candlesticks?contract=${contract}&interval=${interval}&limit=${Math.min(count, 1999)}`);
     if (!Array.isArray(j) || j.length < 60) throw new Error('Gate: too few candles');
-    const now = Date.now() / 1000;
-    return j.map(r => ({ t: +r.t, o: +r.o, h: +r.h, l: +r.l, c: +r.c, v: (+r.sum || 0) / (+r.c || 1), closed: +r.t + sec <= now })).sort((a, b) => a.t - b.t);
+    return gateRows(j, sec);
   }
   async function candles(sym, tfKey, count, prefer) {
     const tf = TFS[tfKey], s = SYMBOLS[sym], errs = [];
@@ -1424,6 +1449,21 @@ const Trades = (() => {
       if (!fin(out.oiUsd)) { out.oiUsd = L.open_interest_usd; out.sources.oi = 'Gate.io'; }
     }
     return out;
+  }
+
+  // positioning data (7 requests: OKX funding/history/OI/ticker + Gate stats/ticker/funding) at most every 60 s per coin;
+  // in between only the ticker is fetched (1 request). Shared by the main view and My trades; concurrent callers share one request.
+  const futCache = {}, futInflight = {};
+  function futuresLive(sym) {
+    if (futInflight[sym]) return futInflight[sym];
+    return futInflight[sym] = (async () => {
+      const hit = futCache[sym];
+      if (!hit || Date.now() - hit.at > SLOW_TTL) { const v = await futuresData(sym); futCache[sym] = { v, at: Date.now() }; return v; }
+      const s = SYMBOLS[sym], out = { ...hit.v, sources: { ...hit.v.sources } };
+      try { const j = await getJSON(`https://www.okx.com/api/v5/market/ticker?instId=${s.okx}`, 8000, 1), d = j.data[0]; out.last = +d.last; out.priceChg24 = (+d.last / +d.open24h - 1) * 100; out.sources.ticker = 'OKX'; }
+      catch (e) { try { const g = await getJSON(`https://api.gateio.ws/api/v4/futures/usdt/tickers?contract=${s.gate}`, 8000, 1); out.last = +g[0].last; out.priceChg24 = +g[0].change_percentage; out.sources.ticker = 'Gate.io'; } catch (e2) { } }
+      return out;
+    })().finally(() => { delete futInflight[sym]; });
   }
 
   /* ---------- chart ---------- */
@@ -1983,10 +2023,7 @@ TRADE UNDER REVIEW (JSON):
     return NaN;
   }
   const inflight = {};
-  function tFutures(sym) { // positioning data for other coins (same inputs the main signal uses), cached 60 s
-    const k = 'fut|' + sym, hit = S.tmk['_' + k]; if (hit && Date.now() - hit.at < 40e3) return Promise.resolve(hit.v);
-    return inflight[k] || (inflight[k] = futuresData(sym).then(v => { S.tmk['_' + k] = { v, at: Date.now() }; return v; }).finally(() => delete inflight[k]));
-  }
+  const tFutures = sym => futuresLive(sym); // positioning (every 60 s) + ticker (every refresh) for other coins, same inputs as the main signal
   async function tBundle(sym) {
     const cur = S.data && sym === S.sym, out = { at: Date.now(), tf: {} };
     let fut = cur ? S.data.fut : null;
@@ -1997,7 +2034,7 @@ TRADE UNDER REVIEW (JSON):
         if (cur && tf === S.tf) { out.tf[tf] = { ev: S.data.evRaw, x: S.data.x, i: S.data.evRaw.i }; continue; }
         const Tf = TFS[tf], l = await cachedCandles(sym, tf, MTF_BARS), h = await cachedCandles(sym, Tf.htf, MTF_BARS, l.src);
         const top = Tf.top ? await cachedCandles(sym, Tf.top, TOP_BARS, l.src) : null;
-        const x = Engine.buildCtx(l.c, h.c, Tf.sec, TFS[Tf.htf].sec, top ? top.c : null, 86400, Tf.top);
+        const x = memoCtx(sym + '|' + tf, l, h, top, Tf);
         const i = l.c[l.c.length - 1].closed ? x.n - 1 : x.n - 2;
         out.tf[tf] = { ev: Engine.evaluate(x, i, futE, Tf.htf, { dataIssues: dataIssues(l.c, tf) }), x, i, last: l.c[l.c.length - 1].c };
       } catch (e) { console.warn('trades: market data', sym, tf, e.message); }
@@ -2260,10 +2297,33 @@ TRADE UNDER REVIEW (JSON):
     $('mtf').innerHTML = MAIN_TFS.map(tf => { const raw = tf === S.tf && S.data ? S.data.evRaw : r[tf], v = raw ? modeView(raw) : null, k = v ? v.vkey : 'load';
       return `<button data-mtf="${tf}" class="${tf === S.tf ? 'cur' : ''}" title="${tf}: ${v ? WORD[v.vkey] + ' (' + (v.score > 0 ? '+' : '') + v.score + ', ' + v.cond.label + ')' : 'loading'}" aria-label="${tf} ${v ? WORD[v.vkey] : 'loading'}"><i class="${k}"></i>${tf}</button>`; }).join('');
   }
-  async function cachedCandles(sym, tf, count, prefer) {
+  // candle cache: fresh within ttl → no request; older → fetch only the newest 100 bars and merge (1 request); full reload on a
+  // gap, on errors, when fewer bars were cached than needed, and every 10 min while on the Gate.io fallback (to retry OKX first)
+  const cInflight = {};
+  function cachedCandles(sym, tf, count, prefer, ttl = MTF_TTL) {
     const key = sym + '|' + tf, hit = S.candleCache[key];
-    if (hit && Date.now() - hit.at < MTF_TTL && hit.c.length >= Math.min(count, 300)) return hit;
-    const r = await candles(sym, tf, count, prefer); const v = { c: r.c, src: r.src, at: Date.now() }; S.candleCache[key] = v; return v;
+    if (hit && Date.now() - hit.at < ttl && hit.c.length >= Math.min(count, 300)) return Promise.resolve(hit);
+    if (cInflight[key]) return cInflight[key];
+    return cInflight[key] = (async () => {
+      if (hit && (hit.req >= count || hit.c.length >= count) && !(hit.src !== 'OKX' && Date.now() - hit.fullAt > FULL_EVERY)) {
+        try {
+          const nw = await latestCandles(sym, tf, hit.src), last = hit.c[hit.c.length - 1];
+          if (nw.length && nw[0].t <= last.t) { // overlaps the cache → no gap
+            const m = new Map(hit.c.map(k => [k.t, k])); nw.forEach(k => m.set(k.t, k));
+            const v = { c: [...m.values()].sort((a, b) => a.t - b.t).slice(-hit.c.length), src: hit.src, at: Date.now(), req: hit.req, fullAt: hit.fullAt };
+            S.candleCache[key] = v; return v;
+          }
+        } catch (e) { console.warn('incremental candles failed — full reload', sym, tf, e.message); }
+      }
+      const r = await candles(sym, tf, count, prefer), v = { c: r.c, src: r.src, at: Date.now(), req: count, fullAt: Date.now() }; S.candleCache[key] = v; return v;
+    })().finally(() => { delete cInflight[key]; });
+  }
+  // indicator context memo: rebuilt only when one of its candle series changed
+  const ctxMemo = {};
+  function memoCtx(key, l, h, top, T) {
+    const stamp = [l.at, h.at, top ? top.at : 0].join('|'), m = ctxMemo[key];
+    if (m && m.stamp === stamp) return m.x;
+    const x = Engine.buildCtx(l.c, h.c, T.sec, TFS[T.htf].sec, top ? top.c : null, 86400, T.top); ctxMemo[key] = { stamp, x }; return x;
   }
   async function updateMTF(sym, futE, prefer) {
     const out = S.mtf[sym] = S.mtf[sym] || {};
@@ -2273,7 +2333,7 @@ TRADE UNDER REVIEW (JSON):
       try {
         const T = TFS[tf], l = await cachedCandles(sym, tf, MTF_BARS, prefer), h = await cachedCandles(sym, T.htf, MTF_BARS, prefer);
         const top = T.top ? await cachedCandles(sym, T.top, TOP_BARS, prefer) : null;
-        const x = Engine.buildCtx(l.c, h.c, T.sec, TFS[T.htf].sec, top ? top.c : null, 86400, T.top);
+        const x = memoCtx(sym + '|' + tf, l, h, top, T);
         const i = l.c[l.c.length - 1].closed ? x.n - 1 : x.n - 2;
         out[tf] = Engine.evaluate(x, i, futE, T.htf, { dataIssues: dataIssues(l.c, tf) });
       } catch (e) { console.warn('MTF', tf, e.message); }
@@ -2295,15 +2355,13 @@ TRADE UNDER REVIEW (JSON):
   }
   async function load(userAction) {
     const seq = ++S.loadSeq, sym = S.sym, tfKey = S.tf, tf = TFS[tfKey], key = sym + tfKey;
-    S.loading = true; S.lastLoadAt = Date.now(); $('dot').className = 'dot'; $('srcTxt').textContent = 'loading…';
+    S.loading = true; S.lastLoadAt = Date.now(); (window.__loadLog = window.__loadLog || []).push(Date.now()); if (window.__loadLog.length > 200) window.__loadLog.shift(); $('dot').className = 'dot'; $('srcTxt').textContent = 'loading…';
     if (userAction && S.lastKey !== key) { $('overlay').classList.remove('hidden'); $('overlay').textContent = `Loading ${sym} ${tfKey}…`; }
     try {
-      const [ltf, fut] = await Promise.all([candles(sym, tfKey, LTF_BARS), futuresData(sym)]);
-      const [htf, top] = await Promise.all([candles(sym, tf.htf, HTF_BARS, ltf.src).catch(e => ({ src: 'n/a', c: [] })), tf.top ? cachedCandles(sym, tf.top, TOP_BARS, ltf.src).catch(() => null) : null]);
+      const [ltf, fut] = await Promise.all([cachedCandles(sym, tfKey, LTF_BARS, undefined, 0), futuresLive(sym)]);
+      const [htf, top] = await Promise.all([cachedCandles(sym, tf.htf, HTF_BARS, ltf.src, SLOW_TTL).catch(e => ({ src: 'n/a', c: [] })), tf.top ? cachedCandles(sym, tf.top, TOP_BARS, ltf.src, SLOW_TTL).catch(() => null) : null]);
       if (seq !== S.loadSeq) return; // stale response (user switched)
-      S.candleCache[sym + '|' + tfKey] = { c: ltf.c, src: ltf.src, at: Date.now() };
-      if (htf.c.length) S.candleCache[sym + '|' + tf.htf] = { c: htf.c, src: htf.src, at: Date.now() };
-      S.feedError = null;
+      S.feedError = null; window.__loads = (window.__loads || 0) + 1;
       const c = ltf.c, x = Engine.buildCtx(c, htf.c, tf.sec, TFS[tf.htf].sec, top ? top.c : null, 86400, tf.top);
       const iLast = c[c.length - 1].closed ? c.length - 1 : c.length - 2;
       const futE = { funding: fut.funding8h, oiChg24: fut.oiChg24, priceChg24: fut.priceChg24, lsr: fut.lsr };
@@ -2341,9 +2399,12 @@ TRADE UNDER REVIEW (JSON):
   // multi-timeframe strip + deep-history backtest run after the main view is on screen
   async function background(D, a) {
     try {
-      await updateMTF(a.sym, a.futE, a.ltf.src);
-      if (D.bt || S.data !== D) return;
-      const deep = await deepHistory(a.sym, a.tfKey, a.ltf.src, { l: D.c, h: a.htf.c, top: a.top ? a.top.c : null, src: a.ltf.src });
+      S.bg++; let deep;
+      try {
+        await updateMTF(a.sym, a.futE, a.ltf.src);
+        if (D.bt || S.data !== D) return;
+        deep = await deepHistory(a.sym, a.tfKey, a.ltf.src, { l: D.c, h: a.htf.c, top: a.top ? a.top.c : null, src: a.ltf.src });
+      } finally { S.bg--; }
       const bt = await runBacktest({ c: deep.l, h: deep.h, top: deep.top.length ? deep.top : null, tfSec: a.tf.sec, htfSec: TFS[a.tf.htf].sec, topSec: 86400, topName: a.tf.top, htfName: a.tf.htf });
       S.btCache.set(a.btKey, { bt, src: `${deep.src}, ${dS(deep.l[0].t)} → ${dS(deep.l[deep.l.length - 1].t)}` }); if (S.btCache.size > 12) S.btCache.delete(S.btCache.keys().next().value);
       if (S.data && S.data.x === D.x) { S.data.bt = bt; S.data.deepSrc = S.btCache.get(a.btKey).src; refreshView(S.data); }
@@ -2418,13 +2479,17 @@ TRADE UNDER REVIEW (JSON):
   buildControls(); renderPlaybook(); initChart(); renderMTF(); tBadge(); load(true);
   if (localStorage.getItem('fst_tab') === 'trades') window.__showTab('trades');
   window.__ticks = 0;
+  window.__skipped = 0;
   setInterval(() => {
-    if (document.hidden) return;
+    if (document.hidden) return;   // paused while hidden (visibilitychange refreshes on return if the data is old)
     window.__ticks++;
     if (S.loading) { $('cd').textContent = '…'; return; }
-    S.countdown--; $('cd').textContent = S.countdown + 's';
-    if (S.countdown <= 0) load(false);
+    S.countdown--; $('cd').textContent = Math.max(0, S.countdown) + 's';
+    if (S.countdown > 0) return;
+    if (S.bg > 0 || T.busy) { window.__skipped++; S.countdown = REFRESH_SEC; return; } // previous refresh still fetching: skip this tick
+    load(false);
   }, 1000);
+  window.__refreshState = () => ({ loading: S.loading, bg: S.bg, trades: T.busy, skipped: window.__skipped, loads: window.__loads, refreshSec: REFRESH_SEC });
 
   // service worker (installable PWA + offline app shell). Only over http(s); file:// just runs the app.
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
