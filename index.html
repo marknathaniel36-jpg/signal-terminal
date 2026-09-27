@@ -152,6 +152,31 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
 .aiIn{display:flex;gap:6px;align-items:flex-end}.aiIn textarea{resize:vertical;min-height:44px}
 .aiPanel pre{white-space:pre-wrap;word-break:break-all;font:11px var(--mono);color:#9fb0c3;max-height:260px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px}
 
+/* ================= scripture banner (KJV, rotating) ================= */
+.verse{display:flex;align-items:stretch;gap:4px;padding:0 calc(6px + var(--sar)) 0 calc(12px + var(--sal));background:linear-gradient(90deg,rgba(245,176,65,.075),rgba(245,176,65,.02) 60%,transparent);border-bottom:1px solid rgba(245,176,65,.16);min-width:0}
+.verse[hidden]{display:none}
+.verse .vq{flex:1;min-width:0;display:grid;grid-template-rows:minmax(0,1fr);align-items:center;height:44px;padding:3px 0;margin:0;background:none;border:0;color:inherit;text-align:left;cursor:pointer;font:inherit;-webkit-tap-highlight-color:transparent;overflow:hidden}
+.verse .vq:focus-visible{outline:1px solid rgba(245,176,65,.5);outline-offset:-2px;border-radius:4px}
+.verse .vl{grid-area:1/1;min-width:0;opacity:0;transition:opacity .9s ease;font:italic 13px/1.42 Georgia,"Iowan Old Style","Palatino Linotype",Palatino,"Times New Roman",serif;color:#d9ccb0;overflow-wrap:anywhere}
+.verse .vl.on{opacity:1}
+.verse .vl.f2{font-size:12px;line-height:1.36}.verse .vl.f3{font-size:11px;line-height:1.3}
+.verse .vr{font:600 10px/1 var(--sans);font-style:normal;letter-spacing:.06em;color:var(--amber);opacity:.85;white-space:nowrap;margin-left:8px}
+.verse .vr::before{content:"— "}
+.verse .vk{font-weight:500;color:var(--dim);letter-spacing:.04em}
+.verse .vx{flex:none;width:32px;align-self:center;height:32px;border:0;background:none;color:var(--dim);font:400 17px/1 var(--sans);cursor:pointer;border-radius:6px;padding:0}
+.verse .vx:hover{color:var(--txt);background:rgba(255,255,255,.05)}
+.vShow{background:none;border:0;padding:0;color:var(--dim);font:inherit;text-decoration:underline dotted;cursor:pointer}
+.vShow[hidden]{display:none}
+@media (max-width:1024px){
+  .verse{padding-left:calc(10px + var(--sal));padding-right:calc(2px + var(--sar))}
+  .verse .vq{height:50px;padding:2px 0}
+  .verse .vl{font-size:12.5px;line-height:1.36}.verse .vl.f2{font-size:11.5px;line-height:1.3}.verse .vl.f3{font-size:10.5px;line-height:1.27}
+  .verse .vx{width:44px;height:44px;font-size:19px}
+  .verse .vk{display:none}
+  .vShow{min-height:44px}
+}
+@media (prefers-reduced-motion:reduce){.verse .vl{transition:none}}
+
 /* ================= tablet & phone (<=1024px): single column ================= */
 @media (max-width:1024px){
   header{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand tick" "sym sym" "tf tf" "stats stats";gap:8px 10px;position:relative}
@@ -235,6 +260,10 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
     <button class="btn" id="refreshBtn" title="Refresh now" aria-label="Refresh now">↻</button>
   </div>
 </header>
+<div class="verse" id="verseBar" role="region" aria-label="Scripture on wealth and stewardship (KJV)">
+  <button class="vq" id="verseBtn" type="button" title="Next verse" aria-label="Show next verse"><span class="vl on" aria-live="polite"></span><span class="vl" aria-hidden="true"></span></button>
+  <button class="vx" id="verseClose" type="button" title="Hide verses" aria-label="Hide scripture banner">&times;</button>
+</div>
 <main>
   <section class="mainCol">
     <div class="card" id="chartCard">
@@ -298,8 +327,109 @@ footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + 
 </main>
 <footer>
   <span>⚠ Signals are rule-based and for education only — not financial advice. Leveraged futures can lose money fast, and losses can exceed what you expect (gaps, liquidation cascades, funding). Size small, use stops.</span>
+  <button class="vShow" id="verseShow" type="button" hidden>Show scripture banner</button>
   <span id="footSrc">Data: public exchange APIs (OKX primary, Gate.io fallback &amp; positioning). No keys, runs entirely in your browser.</span>
 </footer>
+<script id="verses">
+/* Rotating scripture banner. Verses are KJV (public domain), fetched verbatim from bible-api.com
+   (see tests/verses_verified.json) and injected here at build time by build.py, so it works offline. */
+(function(){
+  const VERSES = [{"reference": "Deuteronomy 8:18", "text": "But thou shalt remember the LORD thy God: for it is he that giveth thee power to get wealth, that he may establish his covenant which he sware unto thy fathers, as it is this day."}, {"reference": "Proverbs 10:22", "text": "The blessing of the LORD, it maketh rich, and he addeth no sorrow with it."}, {"reference": "3 John 1:2", "text": "Beloved, I wish above all things that thou mayest prosper and be in health, even as thy soul prospereth."}, {"reference": "Proverbs 13:11", "text": "Wealth gotten by vanity shall be diminished: but he that gathereth by labour shall increase."}, {"reference": "Proverbs 21:5", "text": "The thoughts of the diligent tend only to plenteousness; but of every one that is hasty only to want."}, {"reference": "Malachi 3:10", "text": "Bring ye all the tithes into the storehouse, that there may be meat in mine house, and prove me now herewith, saith the LORD of hosts, if I will not open you the windows of heaven, and pour you out a blessing, that there shall not be room enough to receive it."}, {"reference": "Philippians 4:19", "text": "But my God shall supply all your need according to his riches in glory by Christ Jesus."}, {"reference": "Proverbs 3:9-10", "text": "Honour the LORD with thy substance, and with the firstfruits of all thine increase: So shall thy barns be filled with plenty, and thy presses shall burst out with new wine.", "parts": [{"reference": "Proverbs 3:9", "text": "Honour the LORD with thy substance, and with the firstfruits of all thine increase:\n"}, {"reference": "Proverbs 3:10", "text": "So shall thy barns be filled with plenty, and thy presses shall burst out with new wine.\n"}]}, {"reference": "Joshua 1:8", "text": "This book of the law shall not depart out of thy mouth; but thou shalt meditate therein day and night, that thou mayest observe to do according to all that is written therein: for then thou shalt make thy way prosperous, and then thou shalt have good success."}, {"reference": "Psalm 1:3", "text": "And he shall be like a tree planted by the rivers of water, that bringeth forth his fruit in his season; his leaf also shall not wither; and whatsoever he doeth shall prosper."}, {"reference": "Proverbs 22:7", "text": "The rich ruleth over the poor, and the borrower is servant to the lender."}, {"reference": "Ecclesiastes 11:2", "text": "Give a portion to seven, and also to eight; for thou knowest not what evil shall be upon the earth."}, {"reference": "Luke 6:38", "text": "Give, and it shall be given unto you; good measure, pressed down, and shaken together, and running over, shall men give into your bosom. For with the same measure that ye mete withal it shall be measured to you again."}, {"reference": "Proverbs 27:23-24", "text": "Be thou diligent to know the state of thy flocks, and look well to thy herds. For riches are not for ever: and doth the crown endure  to every generation?", "parts": [{"reference": "Proverbs 27:23", "text": "Be thou diligent to know the state of thy flocks,\nand look well to thy herds.\n"}, {"reference": "Proverbs 27:24", "text": "For riches\nare not for ever: and doth the crown\nendure\n to every generation?\n"}]}, {"reference": "Psalm 112:3", "text": "Wealth and riches shall be in his house: and his righteousness endureth for ever."}, {"reference": "Proverbs 8:18", "text": "Riches and honour are with me; yea, durable riches and righteousness."}, {"reference": "2 Corinthians 9:8", "text": "And God is able to make all grace abound toward you; that ye, always having all sufficiency in all things, may abound to every good work:"}, {"reference": "Proverbs 11:24-25", "text": "There is that scattereth, and yet increaseth; and there is  that withholdeth more than is meet, but it tendeth to poverty. The liberal soul shall be made fat: and he that watereth shall be watered also himself.", "parts": [{"reference": "Proverbs 11:24", "text": "There is that scattereth, and yet increaseth; and\nthere is\n that withholdeth more than is meet, but\nit tendeth to poverty.\n"}, {"reference": "Proverbs 11:25", "text": "The liberal soul shall be made fat: and he that watereth shall be watered also himself.\n"}]}, {"reference": "Proverbs 13:22", "text": "A good man leaveth an inheritance to his children’s children: and the wealth of the sinner is laid up for the just."}, {"reference": "Psalm 37:4", "text": "Delight thyself also in the LORD; and he shall give thee the desires of thine heart."}, {"reference": "Jeremiah 29:11", "text": "For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end."}, {"reference": "Proverbs 16:3", "text": "Commit thy works unto the LORD, and thy thoughts shall be established."}, {"reference": "Matthew 6:33", "text": "But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you."}, {"reference": "Proverbs 24:3-4", "text": "Through wisdom is an house builded; and by understanding it is established: And by knowledge shall the chambers be filled with all precious and pleasant riches.", "parts": [{"reference": "Proverbs 24:3", "text": "Through wisdom is an house builded; and by understanding it is established:\n"}, {"reference": "Proverbs 24:4", "text": "And by knowledge shall the chambers be filled with all precious and pleasant riches.\n"}]}, {"reference": "Proverbs 28:20", "text": "A faithful man shall abound with blessings: but he that maketh haste to be rich shall not be innocent."}, {"reference": "Isaiah 48:17", "text": "Thus saith the LORD, thy Redeemer, the Holy One of Israel; I am  the LORD thy God which teacheth thee to profit, which leadeth thee by the way that thou shouldest go."}, {"reference": "Psalm 35:27", "text": "Let them shout for joy, and be glad, that favour my righteous cause: yea, let them say continually, Let the LORD be magnified, which hath pleasure in the prosperity of his servant."}, {"reference": "Proverbs 10:4", "text": "He becometh poor that dealeth with a slack hand: but the hand of the diligent maketh rich."}, {"reference": "Genesis 39:3", "text": "And his master saw that the LORD was with him, and that the LORD made all that he did to prosper in his hand."}, {"reference": "Luke 14:28", "text": "For which of you, intending to build a tower, sitteth not down first, and counteth the cost, whether he have sufficient to finish it?"}];
+  const bar = document.getElementById('verseBar'), btn = document.getElementById('verseBtn'),
+        closeB = document.getElementById('verseClose'), showB = document.getElementById('verseShow');
+  if (!bar || !VERSES.length) { if (bar) bar.hidden = true; return; }
+  const KEY = 'fst_verses', PERIOD = 10000, FADE = 900;
+  const layers = btn.querySelectorAll('.vl');
+  const reduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  let cur = null, front = 0, idx = Math.floor(Math.random() * VERSES.length), timer = null, hover = false, press = false, kfocus = false, shown = 0;
+  const clean = t => String(t).replace(/\s+/g, ' ').trim();   // display only: collapse API double spaces/newlines
+  const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const read = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+
+  function fill(el, v){
+    el.textContent = '';
+    const t = document.createElement('span'); t.className = 'vt'; t.textContent = clean(v.text);
+    const r = document.createElement('span'); r.className = 'vr'; r.textContent = v.reference;
+    const k = document.createElement('span'); k.className = 'vk'; k.textContent = ' · KJV'; r.append(k);
+    el.append(t, ' ', r);
+    el.title = clean(v.text) + ' — ' + v.reference + ' (KJV)';
+  }
+  // pick the largest font step at which the complete verse fits the banner; null = does not fit this screen
+  function fit(el){
+    const cs = getComputedStyle(btn), avail = btn.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    for (const c of ['', 'f2', 'f3']) {
+      el.classList.remove('f2', 'f3'); if (c) el.classList.add(c);
+      if (el.getBoundingClientRect().height <= avail + 0.5) return c || 'f1';
+    }
+    return null;
+  }
+  // Show VERSES[i] in full. Verses are never cut mid-sentence: if a multi-verse passage is too long for this screen,
+  // one of its complete single verses is shown (alternating each loop); if a single verse is still too long
+  // (only on narrow phones), it is skipped and the next one is shown.
+  const partTurn = {};
+  function place(el, j){
+    const v = VERSES[j];
+    fill(el, v); if (fit(el)) { cur = v; return true; }
+    if (v.parts) {
+      const n = v.parts.length, s0 = partTurn[j] || 0;
+      for (let q = 0; q < n; q++) { const pv = v.parts[(s0 + q) % n]; fill(el, pv); if (fit(el)) { partTurn[j] = (s0 + q + 1) % n; cur = pv; return true; } }
+    }
+    return false;
+  }
+  function show(i, instant){
+    const back = layers[1 - front];
+    for (let k = 0; k < VERSES.length; k++) {
+      const j = (i + k) % VERSES.length;
+      if (place(back, j)) { idx = j; break; }
+      if (k === VERSES.length - 1) { idx = i % VERSES.length; cur = VERSES[idx]; fill(back, cur); back.classList.remove('f2'); back.classList.add('f3'); }
+    }
+    const old = layers[front];
+    if (instant || reduce.matches) { old.style.transition = back.style.transition = 'none'; }
+    back.classList.add('on'); old.classList.remove('on');
+    back.setAttribute('aria-hidden', 'false'); old.setAttribute('aria-hidden', 'true');
+    back.setAttribute('aria-live', 'polite'); old.removeAttribute('aria-live');
+    if (instant || reduce.matches) { void back.offsetWidth; old.style.transition = back.style.transition = ''; }
+    front = 1 - front; shown++;
+  }
+  function next(){ show((idx + 1) % VERSES.length); schedule(); }
+  function schedule(){
+    clearTimeout(timer); timer = null;
+    if (bar.hidden || hover || press || kfocus || document.hidden) return;
+    timer = setTimeout(next, PERIOD);
+  }
+  function setVisible(on){
+    bar.hidden = !on; if (showB) showB.hidden = on;
+    store(KEY, on ? '1' : '0');
+    if (on) { show(idx, true); schedule(); } else { clearTimeout(timer); timer = null; }
+  }
+
+  btn.addEventListener('click', () => { next(); });
+  btn.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { hover = true; schedule(); } });
+  btn.addEventListener('pointerleave', e => { hover = false; press = false; schedule(); });
+  btn.addEventListener('pointerdown', () => { press = true; schedule(); });
+  ['pointerup', 'pointercancel'].forEach(t => btn.addEventListener(t, () => { press = false; schedule(); }));
+  btn.addEventListener('focus', () => { kfocus = btn.matches(':focus-visible'); schedule(); });   // keyboard focus pauses too
+  btn.addEventListener('blur', () => { kfocus = false; schedule(); });
+  closeB.addEventListener('click', () => setVisible(false));
+  if (showB) showB.addEventListener('click', () => { setVisible(true); bar.scrollIntoView({ block: 'nearest' }); });
+  document.addEventListener('visibilitychange', schedule);
+  let rz = null; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!bar.hidden) show(idx, true); }, 200); });
+
+  if (read(KEY) === '0') { bar.hidden = true; if (showB) showB.hidden = false; }
+  else { show(idx, true); schedule(); }
+
+  window.__verse = {
+    count: VERSES.length, next, show: i => { show(i, true); schedule(); },
+    index: () => idx, text: () => clean(cur.text), ref: () => cur.reference,
+    list: () => VERSES.map(v => ({ reference: v.reference, text: clean(v.text), parts: (v.parts || []).map(x => ({ reference: x.reference, text: clean(x.text) })) })),
+    paused: () => hover || press || kfocus, visible: () => !bar.hidden, setVisible, shown: () => shown,
+    fitAll(){ const out = []; const el = layers[1 - front]; const keep = el.innerHTML, kc = el.className;
+      const c0 = cur, t0 = Object.assign({}, partTurn);
+      VERSES.forEach((v, i) => { const ok = place(el, i); out.push([v.reference, ok ? cur.reference + ' ' + [...el.classList].filter(c => /^f\d$/.test(c)).concat(['f1'])[0] : null]); });
+      Object.keys(partTurn).forEach(k => delete partTurn[k]); Object.assign(partTurn, t0); cur = c0; el.innerHTML = keep; el.className = kc; return out; }
+  };
+})();
+</script>
 <script id="indicators">
 /* ===== Indicator library (pure functions, arrays aligned to input, NaN when undefined) ===== */
 const Ind = (() => {
@@ -1050,15 +1180,19 @@ const ML = (() => {
     }
   }
   // market/candles serves the most recent 1,440 bars (300/page); older bars come from history-candles (100/page, 20 req/2s)
+  // history-candles pages from every concurrent load share one queue spaced 130 ms apart (<= ~15 req/2s, under OKX's 20/2s)
+  let histQ = Promise.resolve();
+  const histSlot = () => { const turn = histQ; histQ = histQ.then(() => sleep(130)); return turn; };
   async function okxCandles(inst, bar, count, sec) {
     let rows = [], after = '', hist = false;
     while (rows.length < count) {
       const ep = hist ? 'history-candles' : 'candles', lim = hist ? 100 : 300;
+      if (hist) await histSlot();
       const j = await getJSON(`https://www.okx.com/api/v5/market/${ep}?instId=${inst}&bar=${bar}&limit=${lim}${after ? '&after=' + after : ''}`);
       if (j.code !== '0') throw new Error('OKX ' + j.msg);
       if (!j.data.length) { if (!hist && count > rows.length && rows.length >= 1400) { hist = true; continue; } break; }
       rows = rows.concat(j.data); after = j.data[j.data.length - 1][0];
-      if (hist) await sleep(160); else if (j.data.length < lim && rows.length < 1400) break; else await sleep(60);
+      if (hist) { /* spacing handled by histSlot() */ } else if (j.data.length < lim && rows.length < 1400) break; else await sleep(60);
     }
     const m = new Map();
     rows.forEach(r => m.set(+r[0], { t: +r[0] / 1000, o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[6], closed: r[8] === '1' }));

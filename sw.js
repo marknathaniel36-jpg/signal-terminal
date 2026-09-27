@@ -2,7 +2,7 @@
    - App shell (index.html, manifest, icons): network-first, cached copy only as an offline fallback.
    - Charting library (versioned CDN URL, immutable): cache-first.
    - Exchange APIs (OKX, Gate.io): NOT intercepted and never cached, so market data is always live or visibly failing. */
-const VERSION = 'signal-terminal-v2';
+const VERSION = 'signal-terminal-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png'];
 const LIB = 'https://unpkg.com/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js';
 const API_HOSTS = ['www.okx.com', 'okx.com', 'api.gateio.ws'];
