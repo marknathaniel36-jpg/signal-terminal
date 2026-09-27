@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Signal Terminal — crypto perpetual futures signals</title>
+<meta name="description" content="Rule-based long/short/don't-trade signals for crypto perpetual futures (BTC, ETH, SOL, XRP, DOGE, BNB).">
+<meta name="theme-color" content="#0a0e15">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Signal Terminal">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png" id="favicon">
+<script>
+  // PWA hooks only over http(s): file:// keeps working without manifest/service-worker noise
+  if (/^https?:$/.test(location.protocol)) { const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.webmanifest'; document.head.appendChild(l); }
+</script>
+<script src="https://unpkg.com/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root{--bg:#0a0e15;--panel:#101620;--panel2:#141c28;--line:#1e2835;--line2:#263243;--txt:#d7dee8;--mut:#7d8a9c;--dim:#566273;
+--green:#1fc77e;--red:#f0506e;--amber:#f5b041;--blue:#4c9aff;--violet:#a78bfa;
+--gSolid:#12a867;--rSolid:#d93654;--nSolid:#3a4252;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;--sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.45 var(--sans);-webkit-text-size-adjust:100%}
+body{overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.mono{font-family:var(--mono)}.up{color:var(--green)}.dn{color:var(--red)}.mut{color:var(--mut)}.amb{color:var(--amber)}
+header{display:flex;align-items:center;gap:12px;padding:8px calc(12px + var(--sar)) 8px calc(12px + var(--sal));padding-top:calc(8px + var(--sat));border-bottom:1px solid var(--line);background:#0c111a;position:sticky;top:0;z-index:6;flex-wrap:wrap}
+.brand{font-weight:700;letter-spacing:.06em;font-size:12px;color:#e8eef6;display:flex;align-items:center;gap:8px;white-space:nowrap;grid-area:brand}
+.brand i{width:9px;height:9px;background:var(--green);transform:rotate(45deg);display:inline-block;box-shadow:0 0 10px var(--green)}
+.seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:2px}
+.seg button{background:none;border:0;padding:4px 10px;border-radius:5px;cursor:pointer;color:var(--mut);font-weight:600;font-size:12px;white-space:nowrap}
+.seg button:hover{color:var(--txt)}.seg button.on{background:var(--line2);color:#fff}
+#symSeg{grid-area:sym}#tfSeg{grid-area:tf}
+.tick{display:flex;align-items:baseline;gap:10px;margin-left:4px;grid-area:tick}.tick .px{font:700 18px var(--mono)}.tick .ch{font:600 12px var(--mono)}
+.vpill{align-self:center;font:800 11px var(--sans);letter-spacing:.05em;padding:3px 8px;border-radius:5px;color:#fff;background:var(--nSolid);white-space:nowrap}
+.vpill.LONG{background:var(--gSolid)}.vpill.SHORT{background:var(--rSolid)}
+.hstat{margin-left:auto;display:flex;gap:11px;align-items:center;font-size:11.5px;color:var(--mut);flex-wrap:wrap;grid-area:stats}
+.hstat b{color:var(--txt);font-weight:600}.dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--dim);margin-right:5px}
+.dot.live{background:var(--green);box-shadow:0 0 8px var(--green)}.dot.err{background:var(--red)}.dot.paused{background:var(--amber)}
+.btn{background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px}.btn:hover{border-color:var(--blue)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:10px;padding:10px calc(12px + var(--sar)) 10px calc(12px + var(--sal))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.card h3{margin:0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:700;padding:10px 12px 0}
+.mainCol{min-width:0;display:flex;flex-direction:column;gap:10px}
+#chartCard{overflow:hidden}
+#chartWrap{position:relative;height:calc(100vh - 250px);min-height:500px}
+#chart{position:absolute;inset:0}
+.chartBar{display:none}
+.legend{position:absolute;left:10px;top:8px;z-index:3;font:11px var(--mono);color:var(--mut);pointer-events:none;display:flex;gap:10px;flex-wrap:wrap;max-width:calc(100% - 90px)}
+.legend b{font-weight:600}.lg-ema20{color:#f5b041}.lg-ema50{color:#4c9aff}.lg-ema200{color:#e879f9}.lg-bb{color:#64748b}
+.overlayMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:4;color:var(--mut);background:rgba(10,14,21,.75);font-size:14px;text-align:center;padding:20px}
+.side{display:flex;flex-direction:column;gap:10px;position:sticky;top:58px;align-self:start;min-width:0}
+/* ---- verdict banner ---- */
+.verdict{padding:10px 12px 12px}
+.vmeta{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--mut);margin-bottom:8px}
+.banner{display:flex;align-items:center;gap:12px;border-radius:10px;padding:12px 14px;color:#fff;background:var(--nSolid);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.banner.LONG{background:linear-gradient(135deg,#14b86f,#0e8f55)}.banner.SHORT{background:linear-gradient(135deg,#e5445f,#b82542)}
+.banner.NOTRADE{background:linear-gradient(135deg,#454e5f,#323948)}
+.vicon{width:44px;height:44px;flex:none;border-radius:50%;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center}
+.vicon svg{width:26px;height:26px}
+.vtext{flex:1;min-width:0}.vword{font:800 25px/1.05 var(--sans);letter-spacing:.02em}.vsub{font-size:11.5px;opacity:.9;margin-top:3px}
+.banner.NOTRADE .vword{font-size:21px;white-space:nowrap}
+.vscore{text-align:right;flex:none}.vscore .n{font:800 26px/1 var(--mono)}.vscore .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;opacity:.9;margin-top:4px}
+.condRow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;flex-wrap:wrap}
+.cond{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid var(--line2);background:var(--panel2);white-space:nowrap}
+.cond.up{color:var(--green);border-color:rgba(31,199,126,.4)}.cond.down{color:var(--red);border-color:rgba(240,80,110,.4)}
+.cond.sideways,.cond.transitional{color:#cbd5e1}.cond.squeeze{color:var(--amber);border-color:rgba(245,176,65,.4)}.cond.volatile{color:#fb923c;border-color:rgba(251,146,60,.45)}
+.mtf{display:flex;gap:4px}
+.modeBtn{background:var(--panel2);border:1px solid var(--line2);border-radius:20px;padding:3px 10px;font:700 11px var(--sans);color:var(--mut);cursor:pointer;white-space:nowrap}.modeBtn.on{color:#0a0e15;background:#f5d061;border-color:#f5d061}
+.aplusTag{display:inline-block;margin-left:6px;font:800 10px var(--sans);padding:1px 5px;border-radius:4px;background:#f5d061;color:#0a0e15;vertical-align:middle}
+.nflag{color:var(--amber);font-size:10px;margin-left:3px}.note{font-size:12px;color:#b9c4d1;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:0 0 12px}
+.mtf button{display:flex;align-items:center;gap:5px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:3px 7px;font:600 11px var(--mono);color:var(--mut);cursor:pointer}
+.mtf button.cur{border-color:var(--blue);color:#fff}
+.mtf i{width:9px;height:9px;border-radius:50%;background:#6b7280;display:inline-block}.mtf i.LONG{background:var(--green)}.mtf i.SHORT{background:var(--red)}.mtf i.load{background:transparent;border:1px dashed var(--dim)}
+.reasons{margin:10px 0 0;padding:0;list-style:none;font-size:12px;color:#c9d3df}
+.reasons .rh{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin:0 0 4px}
+.reasons li{position:relative;padding:3px 0 3px 16px;line-height:1.4}
+.reasons li::before{content:"";position:absolute;left:2px;top:9px;width:7px;height:7px;border-radius:2px;background:#6b7280}
+.reasons li.morew{padding-left:0}.reasons li.morew::before{display:none}.more{background:none;border:1px solid var(--line2);border-radius:8px;color:var(--mut);padding:6px 12px;cursor:pointer;font-size:12px}
+.reasons li.pro::before{background:var(--green)}.reasons li.con::before{background:var(--red)}.reasons li.cau::before{background:var(--amber)}
+.gauge{position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,#8a2336,#2a2f3a 40%,#2a2f3a 60%,#12764a);margin:12px 0 4px}
+.gauge .mk{position:absolute;top:-4px;width:3px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 6px #fff;transform:translateX(-1px)}
+.gauge .th{position:absolute;top:-2px;width:1px;height:12px;background:var(--dim)}
+.gscale{display:flex;justify-content:space-between;font:10px var(--mono);color:var(--dim)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.chip{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--panel2);border:1px solid var(--line2);color:var(--mut)}
+.chip b{color:var(--txt);font-weight:600}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;padding:10px 12px 12px;font-size:12.5px}
+.kv .k{color:var(--mut)}.kv .v{text-align:right;font-family:var(--mono);min-width:0;overflow-wrap:anywhere}
+.collapser{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:0 12px 0 0;cursor:default;text-align:left}
+.collapser .chev{display:none}
+.tag{font-size:10px;padding:2px 7px;border-radius:4px;background:var(--panel2);border:1px solid var(--line2);color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin-top:10px}
+.tag.hypo{color:var(--amber);border-color:rgba(245,176,65,.35)}.tag.LONG{color:#fff;background:var(--gSolid);border-color:var(--gSolid)}.tag.SHORT{color:#fff;background:var(--rSolid);border-color:var(--rSolid)}
+.warn{margin:0 12px 12px;padding:7px 9px;border-radius:6px;background:rgba(240,80,110,.1);border:1px solid rgba(240,80,110,.35);color:#ffb3c1;font-size:11.5px}
+.warn.soft{background:rgba(245,176,65,.08);border-color:rgba(245,176,65,.3);color:#ffd591}
+.calc{padding:8px 12px 4px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.calc label{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;display:flex;flex-direction:column;gap:3px;min-width:0}
+.calc input{background:var(--bg);border:1px solid var(--line2);border-radius:6px;padding:5px 7px;font-family:var(--mono);width:100%;min-width:0}
+.calc input:focus{outline:none;border-color:var(--blue)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 8px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{background:none;border:0;padding:10px 12px;cursor:pointer;color:var(--mut);font-weight:600;font-size:12.5px;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button.on{color:#fff;border-bottom-color:var(--blue)}
+.tabBody{padding:12px;min-width:0}.hidden{display:none!important}
+table{border-collapse:collapse;width:100%}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.bar{position:relative;height:6px;background:var(--panel2);border-radius:3px;width:120px;max-width:100%;margin-top:6px}
+.bar .z{position:absolute;left:50%;top:-2px;width:1px;height:10px;background:var(--dim)}
+.bar .f{position:absolute;top:0;height:6px;border-radius:3px}
+.val{font:700 13px var(--mono);text-align:right;white-space:nowrap}
+.frow.pos{background:linear-gradient(90deg,rgba(31,199,126,.07),transparent 60%)}.frow.neg{background:linear-gradient(90deg,rgba(240,80,110,.07),transparent 60%)}
+.grp{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.two{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px}
+.igrid{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:12px}.igrid .v{font-family:var(--mono);text-align:right}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-width:0}.stat .l{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}.stat .n{font:700 19px var(--mono);margin-top:2px;overflow-wrap:anywhere}
+.cmp{margin-bottom:12px}.cmp td,.cmp th{text-align:right;font-family:var(--mono);font-size:12px}.cmp td:first-child,.cmp th:first-child{text-align:left;font-family:var(--sans)}
+#eqChart{height:190px;position:relative}
+.notes p{margin:0 0 10px;font-size:13.5px;line-height:1.6;color:#c9d3df}.notes b{color:#fff}
+.play{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.play div{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.play h4{margin:0 0 6px;font-size:12px;color:#fff}.play ul{margin:0;padding-left:17px;color:#b9c4d1;font-size:12.5px}.play li{margin:3px 0}
+.fbars{display:flex;align-items:center;gap:2px;height:70px;border-bottom:1px solid var(--line);margin:6px 0 2px;position:relative}
+.fbars span{flex:1;min-width:2px;border-radius:1px}.fbars .fb{position:relative;height:100%;border-radius:0}.fbars .fb i{position:absolute;left:0;right:0;border-radius:1px}.fbars .zl{position:absolute;left:0;right:0;top:50%;height:1px;background:var(--line2)}
+.fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+footer{padding:10px calc(14px + var(--sar)) calc(16px + var(--sab)) calc(14px + var(--sal));color:var(--dim);font-size:11.5px;border-top:1px solid var(--line);margin-top:6px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+
+.aiRow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding:7px 9px;border-radius:8px;background:rgba(76,154,255,.07);border:1px solid rgba(76,154,255,.22);font-size:12px;color:#c9d3df}
+.aiRow b{font:800 15px var(--mono);color:#fff}.aiRow .sk{font-size:11px;color:var(--mut)}.aiRow .sk.weak{color:var(--amber)}.aiRow .sk.ok{color:var(--green)}
+.aiBadge{display:inline-block;font:800 9.5px var(--sans);padding:1px 5px;border-radius:4px;background:#4c9aff;color:#0a0e15;margin-right:5px;vertical-align:1px}
+.modeBtn.ai.on{background:#4c9aff;border-color:#4c9aff}
+.mlbox{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0 0 12px;font-size:12.5px;color:#c9d3df}
+.mlbox h4{margin:0 0 6px;font-size:13px;color:#fff}.mlbox .verdictLine{font-weight:700;margin:6px 0}.mlbox .verdictLine.bad{color:var(--amber)}.mlbox .verdictLine.good{color:var(--green)}
+.mlgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:8px 0}.mlgrid>div{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}.mlgrid .l{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}.mlgrid .n{font:700 15px var(--mono)}
+.calib td,.calib th{font-family:var(--mono);font-size:11.5px;text-align:right;padding:4px 6px}.calib td:first-child,.calib th:first-child{text-align:left}
+.aiPanel{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px}
+.aiSet{display:grid;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;align-content:start}
+.aiSet label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.aiSet input,.aiSet select,.aiIn textarea{background:var(--bg);border:1px solid var(--line2);border-radius:6px;padding:7px 8px;color:var(--txt);font:13px var(--sans);width:100%;min-width:0}
+.aiBtns{display:flex;gap:6px;flex-wrap:wrap}.aiB{background:var(--panel);border:1px solid var(--line2);border-radius:8px;color:var(--txt);padding:7px 12px;cursor:pointer;font:600 12.5px var(--sans)}
+.aiB.pri{background:#4c9aff;border-color:#4c9aff;color:#0a0e15}.aiB:disabled{opacity:.5;cursor:default}
+.aiKeyState{font-size:11.5px}.aiKeyState.on{color:var(--green)}.aiKeyState.off{color:var(--amber)}
+.aiLog{display:flex;flex-direction:column;gap:8px;min-height:120px;max-height:520px;overflow-y:auto;padding:4px 2px;margin-bottom:8px}
+.msg{border-radius:10px;padding:8px 11px;font-size:13px;line-height:1.55;max-width:100%;overflow-wrap:anywhere}
+.msg.user{align-self:flex-end;background:rgba(76,154,255,.14);border:1px solid rgba(76,154,255,.3);max-width:88%}
+.msg.assistant{background:var(--panel2);border:1px solid var(--line)}.msg.err{background:rgba(240,80,110,.1);border:1px solid rgba(240,80,110,.35);color:#ffb3c1}
+.msg.sys{color:var(--mut);font-size:12px;border:1px dashed var(--line2)}.msg .meta{font-size:10.5px;color:var(--dim);margin-top:4px}
+.msg ul{margin:4px 0;padding-left:18px}.msg p{margin:0 0 6px}.msg code{font-family:var(--mono);font-size:12px}
+.aiIn{display:flex;gap:6px;align-items:flex-end}.aiIn textarea{resize:vertical;min-height:44px}
+.aiPanel pre{white-space:pre-wrap;word-break:break-all;font:11px var(--mono);color:#9fb0c3;max-height:260px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px}
+
+/* ================= tablet & phone (<=1024px): single column ================= */
+@media (max-width:1024px){
+  header{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand tick" "sym sym" "tf tf" "stats stats";gap:8px 10px;position:relative}
+  .tick{margin:0;justify-content:flex-end}
+  #symSeg,#tfSeg{overflow-x:auto;scrollbar-width:none;background:none;border:0;padding:0;gap:6px}
+  #symSeg::-webkit-scrollbar{display:none}
+  .seg button{min-height:44px;min-width:56px;padding:0 14px;font-size:14px;border-radius:22px;background:var(--panel);border:1px solid var(--line)}
+  #tfSeg button{flex:1}
+  .seg button.on{background:#e8eef6;color:#0a0e15;border-color:#e8eef6}
+  .hstat{margin:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:14px;font-size:12px;white-space:nowrap}
+  .hstat::-webkit-scrollbar{display:none}
+  .btn{min-height:44px;min-width:44px;font-size:16px}
+  main{display:flex;flex-direction:column;gap:10px;padding-top:10px}
+  .mainCol,.side{display:contents}
+  #verdictCard{order:1}#chartCard{order:2}#planCard{order:3}#sizeCard{order:4}#tabsCard{order:5}
+  .chartBar{display:flex;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line);align-items:center;overflow-x:auto;scrollbar-width:none}
+  .chartBar .lbl{font-size:11px;color:var(--mut);margin-right:auto;white-space:nowrap}
+  .tog{min-height:44px;min-width:56px;padding:0 12px;border-radius:22px;border:1px solid var(--line2);background:var(--panel2);color:var(--mut);font-weight:600;cursor:pointer}
+  .tog.on{color:#fff;border-color:var(--blue);background:rgba(76,154,255,.14)}
+  #chartWrap{height:clamp(380px,62vh,620px);min-height:0}
+  .legend{font-size:10px;gap:6px;top:6px;left:8px;max-width:calc(100% - 70px)}.legend .lg-bb,.legend .lg-opt{display:none}
+  .tabs{position:sticky;top:0;z-index:5;background:var(--panel);border-radius:10px 10px 0 0;padding:0 4px}
+  .tabs button{min-height:48px;padding:0 14px;font-size:14px}
+  .collapser{cursor:pointer;min-height:48px;padding-right:12px}.collapser h3{padding:0 12px}
+  .collapser .chev{display:inline-block;color:var(--mut);transition:transform .2s;font-size:14px;margin-left:8px}
+  .card.collapsed .collapser .chev{transform:rotate(-90deg)}
+  .card.collapsed .cbody{display:none}
+  .calc input{font-size:16px;min-height:44px}
+  .kv{font-size:14px;gap:8px 10px}
+  .mtf button{min-height:44px;min-width:52px;justify-content:center;font-size:12px}
+  .modeBtn{min-height:44px;padding:0 14px;font-size:12.5px}
+  .reasons{font-size:13.5px}
+  .more{min-height:44px;width:100%;font-size:13px}
+  .two,.play{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .aiRow{font-size:13px}.aiPanel{grid-template-columns:1fr}.aiSet input,.aiSet select,.aiIn textarea{font-size:16px;min-height:44px}.aiB{min-height:44px;font-size:14px}
+  .mlgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  footer{font-size:12px}
+}
+@media (max-width:640px){
+  .brand{font-size:11px}.brand .mut{display:none}
+  .tick{gap:6px;flex-wrap:wrap}.tick .px{font-size:17px}#pxLabel{display:none}
+  main{padding-left:calc(8px + var(--sal));padding-right:calc(8px + var(--sar))}
+  .vword{font-size:24px}.banner.NOTRADE .vword{font-size:20px}.vscore .n{font-size:24px}
+  .condRow{display:grid;grid-template-columns:auto 1fr;align-items:center}.cond{justify-self:start}.modeBtn{justify-self:end}.mtf{grid-column:1 / -1}.mtf{justify-content:space-between}.mtf button{flex:1}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat .n{font-size:17px}
+  #vChips{display:none}
+  /* tables reflow into cards */
+  table.reflow thead{display:none}
+  table.reflow,table.reflow tbody,table.reflow tfoot{display:block}
+  table.reflow tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+  table.reflow td{border:0;padding:0}
+  table.reflow td.why{grid-column:1 / -1;font-size:13.5px;margin-top:4px}
+  table.trades tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+  table.trades td{border:0;padding:0;font-size:13px}table.trades td::before{content:attr(data-l);display:block;font:700 10px var(--sans);color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+  table.trades td.res{text-align:left!important}
+  table.cmp thead{display:none}table.cmp,table.cmp tbody{display:block}
+  table.cmp tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 8px;padding:8px 2px;border-bottom:1px solid var(--line)}
+  table.cmp td{border:0;padding:0;text-align:left!important;font-size:12.5px}table.cmp td:first-child{grid-column:1 / -1;font-size:13px}
+  table.cmp td:not(:first-child)::before{content:attr(data-l);display:block;font:700 9.5px var(--sans);color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+  .notes p{font-size:15px}
+}
+@media (max-width:1024px) and (orientation:landscape) and (max-height:520px){
+  #chartWrap{height:calc(100vh - 70px)}
+  header{position:relative}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><i></i>SIGNAL TERMINAL <span class="mut" style="font-weight:600;letter-spacing:.04em">· PERPS</span></div>
+  <div class="seg" id="symSeg" role="tablist" aria-label="Symbol"></div>
+  <div class="seg" id="tfSeg" role="tablist" aria-label="Timeframe"></div>
+  <div class="tick"><span class="px mono" id="px">—</span><span class="ch" id="ch24">—</span><span class="vpill" id="vPill">—</span><span class="mut" style="font-size:11px" id="pxLabel"></span></div>
+  <div class="hstat">
+    <span>Funding <b class="mono" id="hFund">—</b></span>
+    <span>OI 24h <b class="mono" id="hOi">—</b></span>
+    <span><span class="dot" id="dot"></span><span id="srcTxt">connecting…</span></span>
+    <span>Upd <b class="mono" id="upd">—</b> · next <b class="mono" id="cd">—</b></span>
+    <button class="btn" id="refreshBtn" title="Refresh now" aria-label="Refresh now">↻</button>
+  </div>
+</header>
+<main>
+  <section class="mainCol">
+    <div class="card" id="chartCard">
+      <div class="chartBar" id="chartBar"><span class="lbl">Drag to pan · pinch to zoom</span>
+        <button class="tog" data-tog="rsi">RSI</button><button class="tog" data-tog="macd">MACD</button><button class="tog" data-tog="chop">Chop</button></div>
+      <div id="chartWrap">
+        <div class="legend" id="legend"></div>
+        <div id="chart"></div>
+        <div class="overlayMsg" id="overlay">Loading live market data…</div>
+      </div>
+    </div>
+    <div class="card" id="tabsCard">
+      <div class="tabs" id="tabs" role="tablist">
+        <button data-tab="breakdown" class="on">Breakdown</button>
+        <button data-tab="notes">Expert notes</button>
+        <button data-tab="backtest">Backtest</button>
+        <button data-tab="futures">Futures data</button>
+        <button data-tab="ai">AI analyst</button>
+        <button data-tab="playbook">Playbook</button>
+      </div>
+      <div class="tabBody" id="tab-breakdown"></div>
+      <div class="tabBody notes hidden" id="tab-notes"></div>
+      <div class="tabBody hidden" id="tab-backtest"></div>
+      <div class="tabBody hidden" id="tab-futures"></div>
+      <div class="tabBody hidden" id="tab-ai"></div>
+      <div class="tabBody hidden" id="tab-playbook"></div>
+    </div>
+  </section>
+  <aside class="side">
+    <div class="card verdict" id="verdictCard" aria-live="polite">
+      <div class="vmeta" id="vTitle">Signal</div>
+      <div class="banner NOTRADE" id="vBanner">
+        <span class="vicon" id="vIcon"></span>
+        <div class="vtext"><div class="vword" id="vWord">—</div><div class="vsub" id="vSub">loading…</div></div>
+        <div class="vscore"><div class="n" id="vScore">—</div><div class="l" id="vConf">—</div></div>
+      </div>
+      <div class="condRow"><span class="cond" id="vCond">Market: —</span><button class="modeBtn" id="modeBtn" aria-pressed="false" title="Only signal A+ setups: HTF + daily trend agree, clean trend, ≥80% agreement, |score| ≥ 60, momentum confirmed, no positioning red flags">A+ only: OFF</button><div class="mtf" id="mtf"></div></div>
+      <div class="aiRow" id="aiRow"><span id="vAi"><span class="aiBadge">AI</span>model training…</span><button class="modeBtn ai" id="aiBtn" aria-pressed="false" title="Only take signals whose AI probability of hitting TP1 is at or above the threshold chosen on training data">AI filter: OFF</button></div>
+      <ul class="reasons" id="vReasons"></ul>
+      <div class="gauge"><div class="th" style="left:32.5%"></div><div class="th" style="left:67.5%"></div><div class="mk" id="gaugeMk" style="left:50%"></div></div>
+      <div class="gscale"><span>-100 SHORT</span><span>don't trade</span><span>LONG +100</span></div>
+      <div class="chips" id="vChips"></div>
+    </div>
+    <div class="card" id="planCard">
+      <button class="collapser" data-collapse="planCard" aria-expanded="true"><h3>Trade plan</h3><span><span class="tag" id="planTag">—</span><span class="chev">▾</span></span></button>
+      <div class="cbody"><div class="kv" id="planKv"></div><div id="planWarn"></div></div>
+    </div>
+    <div class="card" id="sizeCard">
+      <button class="collapser" data-collapse="sizeCard" aria-expanded="true"><h3>Position size</h3><span class="chev">▾</span></button>
+      <div class="cbody">
+      <div class="calc">
+        <label>Account (USDT)<input id="inAcct" type="number" inputmode="decimal" min="0" step="100" value="10000" enterkeyhint="done"></label>
+        <label>Risk / trade %<input id="inRisk" type="number" inputmode="decimal" min="0.1" max="10" step="0.1" value="1" enterkeyhint="done"></label>
+        <label>Leverage ×<input id="inLev" type="number" inputmode="decimal" min="1" max="125" step="1" value="3" enterkeyhint="done"></label>
+      </div>
+      <div class="kv" id="sizeKv"></div>
+      <div id="sizeWarn"></div>
+      </div>
+    </div>
+  </aside>
+</main>
+<footer>
+  <span>⚠ Signals are rule-based and for education only — not financial advice. Leveraged futures can lose money fast, and losses can exceed what you expect (gaps, liquidation cascades, funding). Size small, use stops.</span>
+  <span id="footSrc">Data: public exchange APIs (OKX primary, Gate.io fallback &amp; positioning). No keys, runs entirely in your browser.</span>
+</footer>
+<script id="indicators">
+/* ===== Indicator library (pure functions, arrays aligned to input, NaN when undefined) ===== */
+const Ind = (() => {
+  const nanArr = n => new Array(n).fill(NaN);
+  const firstValid = a => { for (let i = 0; i < a.length; i++) if (Number.isFinite(a[i])) return i; return a.length; };
+  function sma(src, n) {
+    const out = nanArr(src.length), s = firstValid(src); let sum = 0;
+    for (let i = s; i < src.length; i++) {
+      sum += src[i];
+      if (i - s >= n) sum -= src[i - n];
+      if (i - s >= n - 1) out[i] = sum / n;
+    }
+    return out;
+  }
+  // EMA seeded with SMA of first n values (TradingView convention)
+  function emaAlpha(src, n, a) {
+    const out = nanArr(src.length), s = firstValid(src);
+    if (src.length - s < n) return out;
+    let prev = 0; for (let i = s; i < s + n; i++) prev += src[i]; prev /= n; out[s + n - 1] = prev;
+    for (let i = s + n; i < src.length; i++) { prev = a * src[i] + (1 - a) * prev; out[i] = prev; }
+    return out;
+  }
+  const ema = (src, n) => emaAlpha(src, n, 2 / (n + 1));
+  const rma = (src, n) => emaAlpha(src, n, 1 / n); // Wilder smoothing
+  function stdev(src, n) { // population std (ddof=0), as used by Bollinger/TradingView/ta
+    const out = nanArr(src.length), m = sma(src, n);
+    for (let i = 0; i < src.length; i++) {
+      if (!Number.isFinite(m[i])) continue; let q = 0;
+      for (let k = i - n + 1; k <= i; k++) q += (src[k] - m[i]) ** 2;
+      out[i] = Math.sqrt(q / n);
+    }
+    return out;
+  }
+  function rsi(close, n = 14) {
+    const len = close.length, out = nanArr(len);
+    if (len <= n) return out;
+    let ag = 0, al = 0;
+    for (let i = 1; i <= n; i++) { const d = close[i] - close[i - 1]; if (d > 0) ag += d; else al -= d; }
+    ag /= n; al /= n;
+    out[n] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+    for (let i = n + 1; i < len; i++) {
+      const d = close[i] - close[i - 1];
+      ag = (ag * (n - 1) + Math.max(d, 0)) / n; al = (al * (n - 1) + Math.max(-d, 0)) / n;
+      out[i] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+    }
+    return out;
+  }
+  function macd(close, f = 12, s = 26, sig = 9) {
+    const ef = ema(close, f), es = ema(close, s);
+    const line = close.map((_, i) => ef[i] - es[i]);
+    const signal = ema(line, sig);
+    return { macd: line, signal, hist: line.map((v, i) => v - signal[i]) };
+  }
+  function bollinger(close, n = 20, k = 2) {
+    const mid = sma(close, n), sd = stdev(close, n);
+    return { mid, upper: mid.map((m, i) => m + k * sd[i]), lower: mid.map((m, i) => m - k * sd[i]) };
+  }
+  function trueRange(h, l, c) {
+    return h.map((_, i) => i === 0 ? h[0] - l[0] : Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
+  }
+  function atr(h, l, c, n = 14) { return rma(trueRange(h, l, c), n); }
+  function adx(h, l, c, n = 14) { // Wilder's ADX / DMI
+    const len = c.length, tr = trueRange(h, l, c), pdm = nanArr(len), mdm = nanArr(len);
+    for (let i = 1; i < len; i++) {
+      const up = h[i] - h[i - 1], dn = l[i - 1] - l[i];
+      pdm[i] = up > dn && up > 0 ? up : 0; mdm[i] = dn > up && dn > 0 ? dn : 0;
+    }
+    tr[0] = NaN; // start smoothing at bar 1 (first bar with a prior close)
+    const str = rma(tr, n), sp = rma(pdm, n), sm = rma(mdm, n);
+    const pdi = str.map((t, i) => 100 * sp[i] / t), mdi = str.map((t, i) => 100 * sm[i] / t);
+    const dx = pdi.map((p, i) => { const s = p + mdi[i]; return s === 0 ? 0 : 100 * Math.abs(p - mdi[i]) / s; });
+    return { adx: rma(dx, n), pdi, mdi };
+  }
+  function stochRsi(close, rsiLen = 14, stochLen = 14, kLen = 3, dLen = 3) {
+    const r = rsi(close, rsiLen), raw = nanArr(close.length);
+    for (let i = 0; i < r.length; i++) {
+      if (i < stochLen - 1) continue; let lo = Infinity, hi = -Infinity, ok = true;
+      for (let k = i - stochLen + 1; k <= i; k++) { if (!Number.isFinite(r[k])) { ok = false; break; } lo = Math.min(lo, r[k]); hi = Math.max(hi, r[k]); }
+      if (ok) raw[i] = hi === lo ? 0 : 100 * (r[i] - lo) / (hi - lo);
+    }
+    const k = sma(raw, kLen); return { k, d: sma(k, dLen) };
+  }
+  function vwapSession(h, l, c, v, t, periodSec = 86400) { // resets each UTC day
+    const out = nanArr(c.length); let pv = 0, vv = 0, cur = null;
+    for (let i = 0; i < c.length; i++) {
+      const s = Math.floor(t[i] / periodSec); if (s !== cur) { cur = s; pv = 0; vv = 0; }
+      const tp = (h[i] + l[i] + c[i]) / 3; pv += tp * v[i]; vv += v[i]; out[i] = vv > 0 ? pv / vv : tp;
+    }
+    return out;
+  }
+  function vwapRolling(h, l, c, v, n = 20) {
+    const tpv = c.map((_, i) => (h[i] + l[i] + c[i]) / 3 * v[i]);
+    const a = sma(tpv, n), b = sma(v, n); return a.map((x, i) => x / b[i]);
+  }
+  function obv(c, v) { // standard OBV: +vol on up close, -vol on down close, 0 when unchanged
+    const out = new Array(c.length); out[0] = 0;
+    for (let i = 1; i < c.length; i++) out[i] = out[i - 1] + (c[i] > c[i - 1] ? v[i] : c[i] < c[i - 1] ? -v[i] : 0);
+    return out;
+  }
+  function linregSlope(src, n) {
+    const out = nanArr(src.length), xm = (n - 1) / 2; let den = 0; for (let x = 0; x < n; x++) den += (x - xm) ** 2;
+    for (let i = n - 1; i < src.length; i++) {
+      let ym = 0; for (let k = 0; k < n; k++) ym += src[i - n + 1 + k]; ym /= n; let num = 0;
+      for (let k = 0; k < n; k++) num += (k - xm) * (src[i - n + 1 + k] - ym); out[i] = num / den;
+    }
+    return out;
+  }
+  function highest(src, n, excludeCurrent = false) {
+    const out = nanArr(src.length), off = excludeCurrent ? 1 : 0;
+    for (let i = n - 1 + off; i < src.length; i++) { let m = -Infinity; for (let k = i - n + 1 - off; k <= i - off; k++) m = Math.max(m, src[k]); out[i] = m; }
+    return out;
+  }
+  function lowest(src, n, excludeCurrent = false) {
+    const out = nanArr(src.length), off = excludeCurrent ? 1 : 0;
+    for (let i = n - 1 + off; i < src.length; i++) { let m = Infinity; for (let k = i - n + 1 - off; k <= i - off; k++) m = Math.min(m, src[k]); out[i] = m; }
+    return out;
+  }
+  // pivot at index p (needs `right` future bars -> only usable from bar p+right onward)
+  function pivots(src, left, right, isHigh) {
+    const out = new Array(src.length).fill(false);
+    for (let p = left; p < src.length - right; p++) {
+      let ok = true;
+      for (let k = p - left; k <= p + right; k++) { if (k === p) continue; if (isHigh ? src[k] >= src[p] && k > p || src[k] > src[p] : src[k] <= src[p] && k > p || src[k] < src[p]) { ok = false; break; } }
+      out[p] = ok;
+    }
+    return out;
+  }
+  // Choppiness Index (Dreiss): 100*log10(sum(TR,n)/(HH_n-LL_n))/log10(n). >61.8 = choppy, <38.2 = trending
+  function chop(h, l, c, n = 14) {
+    const tr = trueRange(h, l, c), out = nanArr(c.length);
+    for (let i = n; i < c.length; i++) {
+      let s = 0, hh = -Infinity, ll = Infinity;
+      for (let k = i - n + 1; k <= i; k++) { s += tr[k]; hh = Math.max(hh, h[k]); ll = Math.min(ll, l[k]); }
+      out[i] = hh > ll ? 100 * Math.log10(s / (hh - ll)) / Math.log10(n) : NaN;
+    }
+    return out;
+  }
+  // percentile rank of the current value vs the previous n-1 values (0..100)
+  function percentRank(src, n) {
+    const out = nanArr(src.length);
+    for (let i = n - 1; i < src.length; i++) {
+      if (!Number.isFinite(src[i])) continue; let below = 0, cnt = 0;
+      for (let k = i - n + 1; k < i; k++) { if (!Number.isFinite(src[k])) continue; cnt++; if (src[k] < src[i]) below++; }
+      if (cnt >= n / 2) out[i] = 100 * below / cnt;
+    }
+    return out;
+  }
+  // number of sign changes of (a-b) within the last n bars
+  function crossCount(a, b, n) {
+    const out = nanArr(a.length), sg = a.map((v, i) => Number.isFinite(v) && Number.isFinite(b[i]) ? Math.sign(v - b[i]) : 0);
+    for (let i = n; i < a.length; i++) { let c = 0; for (let k = i - n + 1; k <= i; k++) if (sg[k] && sg[k - 1] && sg[k] !== sg[k - 1]) c++; out[i] = c; }
+    return out;
+  }
+  return { sma, ema, rma, stdev, rsi, macd, bollinger, trueRange, atr, adx, stochRsi, vwapSession, vwapRolling, obv, linregSlope, highest, lowest, pivots, chop, percentRank, crossCount };
+})();
+</script>
+<script id="engine">
+/* ===== Signal engine: expert futures-trader rules, composite score, trade plan, backtest ===== */
+const Engine = (() => {
+  const fin = Number.isFinite;
+  const CFG = {
+    threshold: 35, reversalThreshold: 45,
+    // no-trade filter (textbook defaults, not optimized)
+    chopLevel: 61.8, adxRange: 20, squeezePct: 10, bwWindow: 120, lowVolPct: 10, atrWindow: 200,
+    shockRangeAtr: 3, spikeAtrMult: 2, minAgreement: 0.6, extremeFunding8h: 0.001, whipCrosses20: 4, emaCrosses30: 2,
+    // A+ mode (fixed in advance, not optimized)
+    aplusScore: 60, aplusAgreement: 0.8, oosFraction: 0.3, minTradesMeaningful: 30, feePerSide: 0.0005, slippagePerSide: 0.0002,
+    stopAtr: 1.5, swingBufferAtr: 0.5, maxStopAtr: 4, tp1R: 1.5, tp2R: 3, maxHoldBars: 60, mmr: 0.005,
+  };
+  function buildCtx(candles, htfCandles, tfSec, htfSec, topCandles, topSec, topName) {
+    const g = k => candles.map(x => x[k]);
+    const o = g('o'), h = g('h'), l = g('l'), c = g('c'), v = g('v'), t = g('t');
+    const m = Ind.macd(c), bb = Ind.bollinger(c, 20, 2), dmi = Ind.adx(h, l, c, 14), st = Ind.stochRsi(c);
+    const volSma = Ind.sma(v, 20), obv = Ind.obv(c, v), obvSlope = Ind.linregSlope(obv, 20);
+    const ctx = {
+      tfSec, htfSec, n: c.length, o, h, l, c, v, t,
+      ema20: Ind.ema(c, 20), ema50: Ind.ema(c, 50), ema200: Ind.ema(c, 200), rsi: Ind.rsi(c, 14),
+      macd: m.macd, signal: m.signal, hist: m.hist, bbMid: bb.mid, bbUp: bb.upper, bbLo: bb.lower,
+      atr: Ind.atr(h, l, c, 14), adx: dmi.adx, pdi: dmi.pdi, mdi: dmi.mdi, stK: st.k, stD: st.d,
+      vwap: tfSec < 86400 ? Ind.vwapSession(h, l, c, v, t) : Ind.vwapRolling(h, l, c, v, 20),
+      vwapLabel: tfSec < 86400 ? 'session VWAP (UTC day)' : '20-bar rolling VWAP',
+      volSma, volRatio: v.map((x, i) => x / volSma[i]), obv,
+      obvSlopeN: obvSlope.map((s, i) => s / volSma[i]),
+      hh20: Ind.highest(h, 20, true), ll20: Ind.lowest(l, 20, true),
+      swLo: Ind.lowest(l, 10), swHi: Ind.highest(h, 10),
+      pivLo: Ind.pivots(l, 5, 3, false), pivHi: Ind.pivots(h, 5, 3, true),
+    };
+    ctx.bw = bb.upper.map((u, i) => (u - bb.lower[i]) / bb.mid[i] * 100);
+    ctx.bwRank = Ind.percentRank(ctx.bw, CFG.bwWindow);
+    ctx.chop = Ind.chop(h, l, c, 14);
+    ctx.atrPct = ctx.atr.map((a, i) => a / c[i] * 100);
+    ctx.atrRank = Ind.percentRank(ctx.atrPct, CFG.atrWindow);
+    ctx.atrSma50 = Ind.sma(ctx.atr, 50);
+    ctx.pxCross20 = Ind.crossCount(c, ctx.ema20, 20);
+    ctx.emaCross30 = Ind.crossCount(ctx.ema20, ctx.ema50, 30);
+    ctx.cond = new Array(ctx.n).fill(null);
+    for (let i = 60; i < ctx.n; i++) ctx.cond[i] = marketCondition(ctx, i);
+    // Higher timeframe
+    const hc = (htfCandles || []).map(x => x.c), ht = (htfCandles || []).map(x => x.t);
+    ctx.htf = { c: hc, t: ht, ema50: Ind.ema(hc, 50), ema200: Ind.ema(hc, 200) };
+    const mapIdx = (tt, sec) => { const out = new Array(ctx.n).fill(-1); let j = -1;
+      for (let i = 0; i < ctx.n; i++) { while (j + 1 < tt.length && tt[j + 1] + sec <= t[i] + tfSec) j++; out[i] = j; } // latest bar CLOSED by the close of bar i (no look-ahead)
+      return out; };
+    ctx.htfIdx = mapIdx(ht, htfSec);
+    // "top" trend series for A+ mode: daily (or the HTF itself when the HTF is already daily/weekly)
+    if (topCandles && topCandles.length) {
+      const tc = topCandles.map(x => x.c), tt = topCandles.map(x => x.t);
+      ctx.top = { c: tc, t: tt, ema50: Ind.ema(tc, 50), ema200: Ind.ema(tc, 200), name: topName || '1d' }; ctx.topIdx = mapIdx(tt, topSec);
+    } else { ctx.top = { ...ctx.htf, name: null }; ctx.topIdx = ctx.htfIdx; }
+    return ctx;
+  }
+  const pct = x => (x * 100).toFixed(x !== 0 && Math.abs(x) < 0.001 ? 4 : 3) + '%';
+  function fmtP(p) { if (!fin(p)) return '—'; const a = Math.abs(p); return p.toLocaleString('en-US', { minimumFractionDigits: a >= 1000 ? 1 : a >= 10 ? 2 : a >= 1 ? 4 : 5, maximumFractionDigits: a >= 1000 ? 1 : a >= 10 ? 2 : a >= 1 ? 4 : 5 }); }
+
+  function divergence(x, i) {
+    // Regular divergence using confirmed pivots (pivot p confirmed at p+3 <= i)
+    const lo = [], hi = [];
+    for (let p = i - 3; p >= Math.max(5, i - 60) && (lo.length < 2 || hi.length < 2); p--) {
+      if (x.pivLo[p] && lo.length < 2) lo.push(p);
+      if (x.pivHi[p] && hi.length < 2) hi.push(p);
+    }
+    let bull = null, bear = null;
+    if (lo.length === 2) {
+      const [p2, p1] = lo; // p2 recent
+      if (i - p2 <= 15 && p2 - p1 >= 5 && x.l[p2] < x.l[p1] && x.rsi[p2] > x.rsi[p1] + 2 && x.rsi[p2] < 50) bull = { p1, p2 };
+    }
+    if (hi.length === 2) {
+      const [p2, p1] = hi;
+      if (i - p2 <= 15 && p2 - p1 >= 5 && x.h[p2] > x.h[p1] && x.rsi[p2] < x.rsi[p1] - 2 && x.rsi[p2] > 50) bear = { p1, p2 };
+    }
+    return { bull, bear };
+  }
+
+  function trendState(ser, j) {
+    if (j < 0) return 'unknown'; const hc = ser.c[j], h50 = ser.ema50[j], h200 = ser.ema200[j];
+    if (fin(h200)) return hc > h200 && h50 > h200 ? 'bull' : hc < h200 && h50 < h200 ? 'bear' : 'mixed';
+    if (fin(h50)) return hc > h50 ? 'bull' : 'bear'; return 'unknown';
+  }
+  function marketCondition(x, i) {
+    const adx = x.adx[i], ch = x.chop[i], bwr = x.bwRank[i], atrR = x.atrRank[i], C = x.c[i];
+    const range = x.h[i] - x.l[i], prevAtr = x.atr[i - 1];
+    const shock = fin(prevAtr) && range > CFG.shockRangeAtr * prevAtr;
+    const spike = fin(x.atrSma50[i]) && x.atr[i] > CFG.spikeAtrMult * x.atrSma50[i];
+    const whip = x.pxCross20[i] >= CFG.whipCrosses20 || x.emaCross30[i] >= CFG.emaCrosses30;
+    const choppy = fin(ch) && ch > CFG.chopLevel;
+    const sideways = choppy || adx < CFG.adxRange || (whip && adx < 25); // no trend (ADX<20), choppy (CHOP>61.8) or whipsawing in a weak trend
+    const squeeze = fin(bwr) && bwr <= CFG.squeezePct;
+    const lowVol = fin(atrR) && atrR <= CFG.lowVolPct;
+    const bbPos = (C - x.bbLo[i]) / (x.bbUp[i] - x.bbLo[i]);
+    const e20 = x.ema20[i], e50 = x.ema50[i];
+    const up = adx >= CFG.adxRange && e20 > e50 && C > e50, dn = adx >= CFG.adxRange && e20 < e50 && C < e50;
+    const key = shock || spike ? 'volatile' : squeeze ? 'squeeze' : sideways ? 'sideways' : up ? 'up' : dn ? 'down' : 'transitional';
+    const label = { volatile: 'Volatile', squeeze: 'Squeeze', sideways: 'Sideways / choppy', up: 'Trending up', down: 'Trending down', transitional: 'Transitional' }[key];
+    return { key, label, shock, spike, whip, choppy, sideways, squeeze, lowVol, bbPos, adx, chop: ch, bwRank: bwr, atrRank: atrR, rangeAtr: range / prevAtr, spikeMult: x.atr[i] / x.atrSma50[i] };
+  }
+
+  function evaluate(x, i, fut, htfName = 'HTF', opts = {}) {
+    const F = [], add = (group, label, val, max, reason) => F.push({ group, label, val: Math.round(val), max, reason });
+    const C = x.c[i], atr = x.atr[i], e20 = x.ema20[i], e50 = x.ema50[i], e200 = x.ema200[i], r = x.rsi[i], adx = x.adx[i];
+    const flags = { setup: null, reversal: 0, breakout: 0, pullback: 0, mr: 0 };
+
+    // 1. Higher-timeframe trend filter
+    let htfState = 'unknown';
+    const j = x.htfIdx[i];
+    if (j >= 0) {
+      const hc = x.htf.c[j], h50 = x.htf.ema50[j], h200 = x.htf.ema200[j];
+      if (fin(h200)) {
+        if (hc > h200 && h50 > h200) { htfState = 'bull'; add('Trend', `${htfName} trend`, 20, 20, `${htfName}: price above 200 EMA and 50 EMA > 200 EMA — higher-timeframe uptrend`); }
+        else if (hc < h200 && h50 < h200) { htfState = 'bear'; add('Trend', `${htfName} trend`, -20, 20, `${htfName}: price below 200 EMA and 50 EMA < 200 EMA — higher-timeframe downtrend`); }
+        else if (hc > h200) { htfState = 'mixed'; add('Trend', `${htfName} trend`, 6, 20, `${htfName}: price back above 200 EMA but 50 EMA still below it — early/mixed recovery`); }
+        else { htfState = 'mixed'; add('Trend', `${htfName} trend`, -6, 20, `${htfName}: price lost the 200 EMA while 50 EMA is still above — trend weakening`); }
+      } else if (fin(h50)) {
+        htfState = hc > h50 ? 'bull' : 'bear';
+        add('Trend', `${htfName} trend`, hc > h50 ? 10 : -10, 20, `${htfName}: limited history, price ${hc > h50 ? 'above' : 'below'} 50 EMA (200 EMA unavailable)`);
+      } else add('Trend', `${htfName} trend`, 0, 20, `${htfName}: not enough history for trend filter`);
+    } else add('Trend', `${htfName} trend`, 0, 20, `${htfName}: data unavailable`);
+
+    // 2. Local trend structure (EMA stack)
+    let s = 0; const parts = [];
+    if (fin(e200)) { s += C > e200 ? 1 : -1; s += e50 > e200 ? 1 : -1; }
+    s += C > e20 ? 1 : -1; s += e20 > e50 ? 1 : -1;
+    const stackVal = s / 4 * 15;
+    const stackTxt = s >= 3 ? 'bullish EMA stack (price > 20 > 50 > 200)' : s <= -3 ? 'bearish EMA stack (price < 20 < 50 < 200)' : s > 0 ? 'mildly bullish EMA structure' : s < 0 ? 'mildly bearish EMA structure' : 'EMAs tangled — no clear structure';
+    add('Trend', 'EMA structure', stackVal, 15, `${stackTxt}${fin(e200) ? `; price ${C > e200 ? 'above' : 'below'} 200 EMA` : ''}`);
+
+    // 3. Regime + setup (ADX)
+    let regime = 'transitional';
+    const minLow3 = Math.min(x.l[i], x.l[i - 1], x.l[i - 2]), maxHigh3 = Math.max(x.h[i], x.h[i - 1], x.h[i - 2]);
+    const rsiMin5 = Math.min(...x.rsi.slice(i - 4, i + 1)), rsiMax5 = Math.max(...x.rsi.slice(i - 4, i + 1));
+    if (adx >= 25) {
+      regime = 'trending';
+      if (e20 > e50 && C > e50) {
+        if (minLow3 <= e20 + 0.25 * atr && C > e20 && rsiMin5 >= 35 && rsiMin5 <= 55 && r > x.rsi[i - 1]) { flags.pullback = 1; flags.setup = 'Trend pullback long'; add('Setup', 'Regime & setup', 20, 20, `Trending (ADX ${adx.toFixed(0)}): pulled back to 20 EMA with RSI reset to ${rsiMin5.toFixed(0)} and turning up — continuation long`); }
+        else if (minLow3 <= e50 + 0.25 * atr && C > e50 && rsiMin5 <= 50 && r > x.rsi[i - 1]) { flags.pullback = 1; flags.setup = 'Deep pullback long'; add('Setup', 'Regime & setup', 17, 20, `Trending (ADX ${adx.toFixed(0)}): deeper pullback held the 50 EMA, RSI reset — buy-the-dip zone`); }
+        else if (C > e20 + 2.5 * atr) add('Setup', 'Regime & setup', 2, 20, `Trending up but price is ${((C - e20) / atr).toFixed(1)} ATR above 20 EMA — extended, don't chase`);
+        else add('Setup', 'Regime & setup', 8, 20, `Uptrend (ADX ${adx.toFixed(0)}) intact but no fresh pullback entry — wait for a dip toward the 20 EMA`);
+      } else if (e20 < e50 && C < e50) {
+        if (maxHigh3 >= e20 - 0.25 * atr && C < e20 && rsiMax5 <= 65 && rsiMax5 >= 45 && r < x.rsi[i - 1]) { flags.pullback = -1; flags.setup = 'Trend pullback short'; add('Setup', 'Regime & setup', -20, 20, `Trending (ADX ${adx.toFixed(0)}): bounced into 20 EMA with RSI reset to ${rsiMax5.toFixed(0)} and rolling over — continuation short`); }
+        else if (maxHigh3 >= e50 - 0.25 * atr && C < e50 && rsiMax5 >= 50 && r < x.rsi[i - 1]) { flags.pullback = -1; flags.setup = 'Deep pullback short'; add('Setup', 'Regime & setup', -17, 20, `Trending (ADX ${adx.toFixed(0)}): rally rejected at the 50 EMA — sell-the-rip zone`); }
+        else if (C < e20 - 2.5 * atr) add('Setup', 'Regime & setup', -2, 20, `Trending down but price is ${((e20 - C) / atr).toFixed(1)} ATR below 20 EMA — extended, don't chase shorts`);
+        else add('Setup', 'Regime & setup', -8, 20, `Downtrend (ADX ${adx.toFixed(0)}) intact but no fresh bounce to short — wait for a rally toward the 20 EMA`);
+      } else add('Setup', 'Regime & setup', 0, 20, `ADX ${adx.toFixed(0)} shows momentum but EMAs conflict — likely a trend change in progress`);
+    } else if (adx < 20) {
+      regime = 'ranging';
+      const tagLo = x.l[i] <= x.bbLo[i] || x.l[i - 1] <= x.bbLo[i - 1], tagHi = x.h[i] >= x.bbUp[i] || x.h[i - 1] >= x.bbUp[i - 1];
+      if (tagLo && rsiMin5 <= 35) { flags.mr = 1; flags.setup = 'Range mean-reversion long'; add('Setup', 'Regime & setup', C > x.bbLo[i] ? 18 : 14, 20, `Ranging (ADX ${adx.toFixed(0)}): tagged lower Bollinger Band with RSI ${rsiMin5.toFixed(0)}${C > x.bbLo[i] ? ' and closed back inside' : ''} — fade the low`); }
+      else if (tagHi && rsiMax5 >= 65) { flags.mr = -1; flags.setup = 'Range mean-reversion short'; add('Setup', 'Regime & setup', C < x.bbUp[i] ? -18 : -14, 20, `Ranging (ADX ${adx.toFixed(0)}): tagged upper Bollinger Band with RSI ${rsiMax5.toFixed(0)}${C < x.bbUp[i] ? ' and closed back inside' : ''} — fade the high`); }
+      else add('Setup', 'Regime & setup', 0, 20, `Ranging (ADX ${adx.toFixed(0)}): price mid-range — no edge; only fade the band extremes`);
+    } else {
+      add('Setup', 'Regime & setup', s >= 3 ? 4 : s <= -3 ? -4 : 0, 20, `ADX ${adx.toFixed(0)} — no clear regime (neither trend nor range); patience until ADX > 25 or band extremes`);
+    }
+
+    // 4. MACD momentum
+    const hist = x.hist[i], hp = x.hist[i - 1];
+    let crossUp = false, crossDn = false;
+    for (let k = i - 2; k <= i; k++) { if (x.hist[k - 1] <= 0 && x.hist[k] > 0) crossUp = true; if (x.hist[k - 1] >= 0 && x.hist[k] < 0) crossDn = true; }
+    if (crossUp && hist > 0) add('Momentum', 'MACD', 10, 10, `Fresh bullish MACD cross${x.macd[i] < 0 ? ' below zero (early reversal momentum)' : ''}`);
+    else if (crossDn && hist < 0) add('Momentum', 'MACD', -10, 10, `Fresh bearish MACD cross${x.macd[i] > 0 ? ' above zero (early rollover)' : ''}`);
+    else if (hist > 0) add('Momentum', 'MACD', hist > hp ? 7 : 3, 10, hist > hp ? 'MACD histogram positive and expanding — momentum building' : 'MACD histogram positive but fading — momentum slowing');
+    else add('Momentum', 'MACD', hist < hp ? -7 : -3, 10, hist < hp ? 'MACD histogram negative and expanding — selling momentum building' : 'MACD histogram negative but contracting — selling pressure easing');
+
+    // 5. RSI regime
+    const rWin = x.rsi.slice(i - 13, i + 1), rMin = Math.min(...rWin), rMax = Math.max(...rWin);
+    let rv = 0, rt;
+    if (rMin >= 40 && r > 50) { rv = 10; rt = `RSI ${r.toFixed(0)} holding the bull range (40–80), dips bought above 40`; }
+    else if (rMax <= 60 && r < 50) { rv = -10; rt = `RSI ${r.toFixed(0)} stuck in the bear range (20–60), rallies sold below 60`; }
+    else if (r > 55) { rv = 5; rt = `RSI ${r.toFixed(0)} above midline — bullish bias`; }
+    else if (r < 45) { rv = -5; rt = `RSI ${r.toFixed(0)} below midline — bearish bias`; }
+    else rt = `RSI ${r.toFixed(0)} neutral around 50`;
+    if (r >= 80) { rv = Math.min(rv, 3); rt = `RSI ${r.toFixed(0)} overbought — strong but stretched, poor spot to open longs`; }
+    if (r <= 20) { rv = Math.max(rv, -3); rt = `RSI ${r.toFixed(0)} oversold — weak but stretched, poor spot to open shorts`; }
+    add('Momentum', 'RSI regime', rv, 10, rt);
+
+    // 6. Divergence
+    const dv = divergence(x, i);
+    if (dv.bull && !dv.bear) { flags.reversal = 1; add('Momentum', 'RSI divergence', 12, 12, `Bullish divergence: lower low in price, higher low in RSI (${x.rsi[dv.bull.p1].toFixed(0)}→${x.rsi[dv.bull.p2].toFixed(0)}) — sellers exhausting`); }
+    else if (dv.bear && !dv.bull) { flags.reversal = -1; add('Momentum', 'RSI divergence', -12, 12, `Bearish divergence: higher high in price, lower high in RSI (${x.rsi[dv.bear.p1].toFixed(0)}→${x.rsi[dv.bear.p2].toFixed(0)}) — buyers exhausting`); }
+    else add('Momentum', 'RSI divergence', 0, 12, 'No regular RSI divergence at recent swings');
+    flags.div = dv;
+
+    // 7. Volume / breakout
+    const vr = x.volRatio[i];
+    if (C > x.hh20[i]) {
+      flags.breakout = 1;
+      if (vr >= 1.5) add('Volume', 'Breakout volume', 10, 10, `Broke the 20-bar high on ${vr.toFixed(1)}× average volume — genuine breakout`);
+      else if (vr < 1) add('Volume', 'Breakout volume', -4, 10, `New 20-bar high on below-average volume (${vr.toFixed(1)}×) — fake-out risk`);
+      else add('Volume', 'Breakout volume', 5, 10, `New 20-bar high on ${vr.toFixed(1)}× volume — okay, not emphatic`);
+    } else if (C < x.ll20[i]) {
+      flags.breakout = -1;
+      if (vr >= 1.5) add('Volume', 'Breakout volume', -10, 10, `Broke the 20-bar low on ${vr.toFixed(1)}× average volume — genuine breakdown`);
+      else if (vr < 1) add('Volume', 'Breakout volume', 4, 10, `New 20-bar low on below-average volume (${vr.toFixed(1)}×) — breakdown may fail`);
+      else add('Volume', 'Breakout volume', -5, 10, `New 20-bar low on ${vr.toFixed(1)}× volume — okay, not emphatic`);
+    } else if (vr >= 1.8) {
+      const up = C > x.o[i]; add('Volume', 'Breakout volume', up ? 4 : -4, 10, `Volume spike ${vr.toFixed(1)}× average on a ${up ? 'green' : 'red'} candle inside the range`);
+    } else add('Volume', 'Breakout volume', 0, 10, `Volume ${vr.toFixed(2)}× its 20-bar average; no breakout in play`);
+
+    // 8. OBV slope
+    const os = x.obvSlopeN[i];
+    add('Volume', 'OBV slope', os > 0.15 ? 5 : os < -0.15 ? -5 : os * 20, 5, os > 0.15 ? 'OBV rising over 20 bars — volume flowing in (accumulation)' : os < -0.15 ? 'OBV falling over 20 bars — volume flowing out (distribution)' : 'OBV flat — no clear accumulation/distribution');
+
+    // 9. Stochastic RSI timing
+    const k0 = x.stK[i], d0 = x.stD[i], k1 = x.stK[i - 1], d1 = x.stD[i - 1];
+    const stUp = (k1 <= d1 && k0 > d0) || (x.stK[i - 2] <= x.stD[i - 2] && k1 > d1);
+    const stDn = (k1 >= d1 && k0 < d0) || (x.stK[i - 2] >= x.stD[i - 2] && k1 < d1);
+    if (stUp && Math.min(k0, k1) < 25) add('Timing', 'Stoch RSI', 5, 5, `Stoch RSI bullish cross from oversold (K ${k0.toFixed(0)}) — timing trigger for longs`);
+    else if (stDn && Math.max(k0, k1) > 75) add('Timing', 'Stoch RSI', -5, 5, `Stoch RSI bearish cross from overbought (K ${k0.toFixed(0)}) — timing trigger for shorts`);
+    else add('Timing', 'Stoch RSI', 0, 5, `Stoch RSI K ${fin(k0) ? k0.toFixed(0) : '—'} / D ${fin(d0) ? d0.toFixed(0) : '—'} — no trigger`);
+
+    // 10. VWAP
+    const vw = x.vwap[i];
+    add('Timing', 'VWAP', C > vw ? 3 : -3, 5, `Price ${C > vw ? 'above' : 'below'} ${x.vwapLabel} (${fmtP(vw)}) — ${C > vw ? 'buyers' : 'sellers'} control the average`);
+
+    // 11-13. Futures positioning (live only; not available historically)
+    if (fut) {
+      const f = fut.funding, oi = fut.oiChg24, p24 = fut.priceChg24, lsr = fut.lsr;
+      if (fin(f)) {
+        if (f >= 0.0003) {
+          if (fin(oi) && oi > 2) add('Positioning', 'Funding & crowding', -10, 10, `Funding ${pct(f)} with OI +${oi.toFixed(1)}% — crowded longs, long-squeeze risk`);
+          else add('Positioning', 'Funding & crowding', -5, 10, `Funding elevated at ${pct(f)} — longs paying up, contrarian caution`);
+        } else if (f <= -0.0002) {
+          if (fin(oi) && oi > 2 && fin(p24) && p24 >= -1) add('Positioning', 'Funding & crowding', 10, 10, `Negative funding ${pct(f)}, OI +${oi.toFixed(1)}% and price holding — short-squeeze fuel`);
+          else add('Positioning', 'Funding & crowding', 4, 10, `Negative funding ${pct(f)} — shorts paying, contrarian bullish tilt`);
+        } else add('Positioning', 'Funding & crowding', 0, 10, `Funding ${pct(f)} — neutral, no crowding signal`);
+      }
+      if (fin(oi) && fin(p24)) {
+        let ov = 0, ot;
+        if (oi > 1.5 && p24 > 0.5) { ov = 6; ot = `OI +${oi.toFixed(1)}% with price +${p24.toFixed(1)}% (24h) — new longs backing the move`; }
+        else if (oi > 1.5 && p24 < -0.5) { ov = -6; ot = `OI +${oi.toFixed(1)}% with price ${p24.toFixed(1)}% (24h) — new shorts pressing`; }
+        else if (oi < -1.5 && p24 > 0.5) { ov = 2; ot = `OI ${oi.toFixed(1)}% while price +${p24.toFixed(1)}% — rally driven by short covering (less durable)`; }
+        else if (oi < -1.5 && p24 < -0.5) { ov = -2; ot = `OI ${oi.toFixed(1)}% while price ${p24.toFixed(1)}% — long liquidation, selling may exhaust`; }
+        else ot = `OI ${oi >= 0 ? '+' : ''}${oi.toFixed(1)}%, price ${p24 >= 0 ? '+' : ''}${p24.toFixed(1)}% (24h) — no strong positioning shift`;
+        add('Positioning', 'Open interest vs price', ov, 8, ot);
+      }
+      if (fin(lsr)) {
+        if (lsr > 1.8) add('Positioning', 'Long/short ratio', -4, 5, `Account long/short ratio ${lsr.toFixed(2)} — crowd heavily long (contrarian caution)`);
+        else if (lsr < 0.8) add('Positioning', 'Long/short ratio', 4, 5, `Account long/short ratio ${lsr.toFixed(2)} — crowd leaning short (squeeze potential)`);
+        else add('Positioning', 'Long/short ratio', 0, 5, `Account long/short ratio ${lsr.toFixed(2)} — balanced`);
+      }
+    }
+
+    let score = Math.max(-100, Math.min(100, F.reduce((a, f) => a + f.val, 0)));
+    const dir = score >= 0 ? 1 : -1;
+    const reversalSetup = flags.reversal === dir || flags.mr === dir;
+    // ---- base verdict (original engine: score threshold + higher-timeframe filter) ----
+    let base = null, filterNote = null;
+    if (Math.abs(score) >= CFG.threshold) {
+      const counter = (dir === 1 && htfState === 'bear') || (dir === -1 && htfState === 'bull');
+      if (counter && !(reversalSetup && Math.abs(score) >= CFG.reversalThreshold)) filterNote = `Conflicting timeframes: ${htfName} trend is ${htfState === 'bear' ? 'down' : 'up'} but the ${dir === 1 ? 'long' : 'short'} signal has no strong reversal setup`;
+      else base = dir === 1 ? 'LONG' : 'SHORT';
+    }
+    const tot = F.reduce((a, f) => a + Math.abs(f.val), 0) || 1;
+    const agree = F.reduce((a, f) => a + (Math.sign(f.val) === dir ? Math.abs(f.val) : 0), 0) / tot;
+    const a = Math.abs(score);
+    const confidence = a >= 60 && agree >= 0.75 ? 'High' : a >= 45 && agree >= 0.6 ? 'Medium' : 'Low';
+    // ---- no-trade / chop filter: any blocking reason overrides a directional score ----
+    const cond = x.cond[i] || marketCondition(x, i), blocks = [], cautions = [];
+    (opts.dataIssues || []).forEach(t => blocks.push(t));
+    if (a < CFG.threshold) blocks.push(`Not enough confluence: score ${score > 0 ? '+' : ''}${score} is inside the ±${CFG.threshold} no-trade band`);
+    if (filterNote) blocks.push(filterNote);
+    if (cond.shock) blocks.push(`Volatility shock: the last candle's range was ${cond.rangeAtr.toFixed(1)}× ATR — let it settle, stops get run in this`);
+    else if (cond.spike) blocks.push(`Volatility spike: ATR is ${cond.spikeMult.toFixed(1)}× its 50-bar average — wide, erratic swings`);
+    if (cond.sideways) {
+      const why = [];
+      if (cond.choppy) why.push(`Choppiness Index ${cond.chop.toFixed(0)} > ${CFG.chopLevel}`);
+      if (cond.adx < CFG.adxRange) why.push(`ADX ${cond.adx.toFixed(0)} < ${CFG.adxRange} (no trend)`);
+      if (x.pxCross20[i] >= CFG.whipCrosses20) why.push(`price crossed the 20 EMA ${x.pxCross20[i]}× in 20 bars`);
+      if (x.emaCross30[i] >= CFG.emaCrosses30) why.push(`20/50 EMAs crossed ${x.emaCross30[i]}× in 30 bars`);
+      if (fin(cond.bwRank) && cond.bwRank < 30) why.push(`Bollinger bandwidth in its lowest ${Math.max(1, Math.round(cond.bwRank))}% range`);
+      if (flags.mr === dir && base) cautions.push(`Sideways market — only the range-extreme fade is allowed; take profit near the middle band (${fmtP(x.bbMid[i])})`);
+      else blocks.push(`Sideways / choppy market: ${why.join(', ')} — trend signals whipsaw here`);
+    }
+    const breakoutOk = flags.breakout === dir && x.volRatio[i] >= 1.5;
+    if (cond.squeeze && !breakoutOk) blocks.push(`Bollinger squeeze (bandwidth in the lowest ${CFG.squeezePct}% of ${CFG.bwWindow} bars): a big move is loading — wait for a breakout close on 1.5×+ volume, don't guess the direction`);
+    else if (cond.lowVol && !breakoutOk) blocks.push(`Volatility too low: ATR is ${x.atrPct[i].toFixed(2)}% of price (bottom ${CFG.lowVolPct}% of ${CFG.atrWindow} bars) — moves too small to beat fees and slippage`);
+    if (agree < CFG.minAgreement) blocks.push(`Conflicting signals: only ${Math.round(agree * 100)}% of the weighted factors point the same way (need ${CFG.minAgreement * 100}%)`);
+    if (fut && fin(fut.funding) && Math.abs(fut.funding) >= CFG.extremeFunding8h) {
+      const crowdedLong = fut.funding > 0;
+      if ((crowdedLong && dir === 1) || (!crowdedLong && dir === -1)) blocks.push(`Crowded positioning: funding ${pct(fut.funding)}/8h is extreme — ${crowdedLong ? 'longs' : 'shorts'} are overcrowded, squeeze risk`);
+      else cautions.push(`Extreme funding (${pct(fut.funding)}/8h) — violent squeezes possible in either direction`);
+    }
+    if (regime === 'ranging' && !flags.setup && cond.bbPos > 0.3 && cond.bbPos < 0.7) blocks.push(`Price stuck mid-range (${Math.round(cond.bbPos * 100)}% of the Bollinger range) — no edge until it reaches an extreme`);
+    if (base && !cond.sideways && cond.lowVol && breakoutOk) cautions.push('Breaking out of a low-volatility base — valid, but expect a retest');
+    const verdict = base && blocks.length === 0 ? base : "DON'T TRADE";
+    const vkey = verdict === 'LONG' ? 'LONG' : verdict === 'SHORT' ? 'SHORT' : 'NOTRADE';
+    // ---- A+ mode: stricter confluence on top of the normal verdict ----
+    const want = dir === 1 ? 'bull' : 'bear', wantWord = dir === 1 ? 'up' : 'down', ap = [];
+    const topName = x.top.name, topState = topName ? trendState(x.top, x.topIdx[i]) : htfState;
+    if (htfState !== want) ap.push(`A+: ${htfName} trend is not clearly ${wantWord}`);
+    if (topName && topName !== htfName && topState !== want) ap.push(`A+: ${topName} trend is not clearly ${wantWord}`);
+    if (cond.key !== (dir === 1 ? 'up' : 'down')) ap.push(`A+: market condition is "${cond.label}", not a clean trend ${wantWord}`);
+    if (agree < CFG.aplusAgreement) ap.push(`A+: factor agreement ${Math.round(agree * 100)}% < ${CFG.aplusAgreement * 100}%`);
+    if (a < CFG.aplusScore) ap.push(`A+: |score| ${a} < ${CFG.aplusScore}`);
+    const mF = F.find(f => f.label === 'MACD'), rF = F.find(f => f.label === 'RSI regime');
+    if (!(mF && Math.sign(mF.val) === dir && rF && Math.sign(rF.val) === dir)) ap.push('A+: momentum not confirmed (MACD and RSI regime must both agree)');
+    F.filter(f => f.group === 'Positioning' && f.val * dir <= -4).forEach(f => ap.push('A+: positioning red flag — ' + f.reason));
+    if (fut && fin(fut.funding) && Math.abs(fut.funding) >= CFG.extremeFunding8h) ap.push('A+: extreme funding');
+    const aplusVerdict = verdict !== "DON'T TRADE" && ap.length === 0 ? verdict : "DON'T TRADE";
+    return { i, score, verdict, vkey, base, dir, confidence, agree, factors: F, regime, htfState, topState, flags, filterNote, close: C, atr, cond, blocks, cautions,
+      aplus: { verdict: aplusVerdict, vkey: aplusVerdict === 'LONG' ? 'LONG' : aplusVerdict === 'SHORT' ? 'SHORT' : 'NOTRADE', fails: ap } };
+  }
+
+  function plan(x, i, dir, leverage, entryPrice) {
+    const atr = x.atr[i], entry = entryPrice ?? x.c[i];
+    let stop;
+    if (dir === 1) { stop = Math.min(x.swLo[i] - CFG.swingBufferAtr * atr, entry - CFG.stopAtr * atr); stop = Math.max(stop, entry - CFG.maxStopAtr * atr); }
+    else { stop = Math.max(x.swHi[i] + CFG.swingBufferAtr * atr, entry + CFG.stopAtr * atr); stop = Math.min(stop, entry + CFG.maxStopAtr * atr); }
+    const R = Math.abs(entry - stop);
+    const L = leverage || 3;
+    const liq = dir === 1 ? entry * (1 - 1 / L + CFG.mmr) : entry * (1 + 1 / L - CFG.mmr);
+    const stopBeyondLiq = dir === 1 ? stop <= liq : stop >= liq;
+    return {
+      dir, entry, zone: dir === 1 ? [entry - 0.35 * atr, entry] : [entry, entry + 0.35 * atr],
+      stop, R, riskPct: R / entry * 100, tp1: entry + dir * CFG.tp1R * R, tp2: entry + dir * CFG.tp2R * R,
+      liq, stopBeyondLiq, atr, swing: dir === 1 ? x.swLo[i] : x.swHi[i],
+    };
+  }
+
+  // Evaluate every closed bar once, then simulate each mode on the resulting signal arrays.
+  // Also records, per bar, the ML feature vector and the outcome of a hypothetical trade in the score's direction (for the AI model).
+  function signalSeries(x, htfName) {
+    const start = 210, lastClosed = x.n - 2, raw = [], normal = [], aplus = [], feat = [], dirs = [], outc = [];
+    const wantML = typeof ML !== 'undefined';
+    for (let i = 0; i <= lastClosed; i++) {
+      if (i < start || !fin(x.atr[i]) || !fin(x.adx[i]) || !fin(x.ema50[i])) { raw.push(null); normal.push(null); aplus.push(null); feat.push(null); dirs.push(0); outc.push(null); continue; }
+      const ev = evaluate(x, i, null, htfName);
+      raw.push(ev.base); normal.push(ev.verdict === "DON'T TRADE" ? null : ev.verdict); aplus.push(ev.aplus.verdict === "DON'T TRADE" ? null : ev.aplus.verdict);
+      dirs.push(ev.dir);
+      if (wantML) { feat.push(ML.features(x, i, ev)); outc.push(tradeFrom(x, i, ev.dir)); } else { feat.push(null); outc.push(null); }
+    }
+    return { start, lastClosed, raw, normal, aplus, feat, dirs, outc };
+  }
+  // One trade from the close of bar i: entry next open, ATR/swing stop, 50% at TP1 (1.5R) then stop to breakeven, rest at TP2 (3R), 60-bar time stop.
+  function tradeFrom(x, i, dir) {
+    const lastClosed = x.n - 2, cost = (CFG.feePerSide + CFG.slippagePerSide) * 2;
+    if (i + 1 > lastClosed) return null;
+    const fill = x.o[i + 1], p = plan(x, i, dir, 3, x.c[i]);
+    const R = (fill - p.stop) * dir; if (!(R > 0)) return null;
+    const tp1 = fill + dir * CFG.tp1R * R, tp2 = fill + dir * CFG.tp2R * R;
+    let stop = p.stop, half = false, realized = 0, exitIdx = null, exitReason = '', hitTp2 = false;
+    for (let j = i + 1; j <= lastClosed; j++) {
+      if (dir === 1 ? x.l[j] <= stop : x.h[j] >= stop) { realized += (half ? 0.5 : 1) * ((stop - fill) * dir / R); exitIdx = j; exitReason = half ? 'breakeven stop after TP1' : 'stop loss'; break; } // conservative: stop first
+      if (!half && (dir === 1 ? x.h[j] >= tp1 : x.l[j] <= tp1)) { realized += 0.5 * CFG.tp1R; half = true; stop = fill; }
+      if (half && (dir === 1 ? x.h[j] >= tp2 : x.l[j] <= tp2)) { realized += 0.5 * CFG.tp2R; exitIdx = j; exitReason = 'TP2'; hitTp2 = true; break; }
+      if (j - i >= CFG.maxHoldBars) { realized += (half ? 0.5 : 1) * ((x.c[j] - fill) * dir / R); exitIdx = j; exitReason = 'time stop'; break; }
+    }
+    if (exitIdx === null) return { open: true, i, entryIdx: i + 1, dir, fill, stop: p.stop, tp1, tp2 };
+    const feeR = cost * fill / R;
+    return { i, entryIdx: i + 1, exitIdx, dir, fill, stop: p.stop, tp1, tp2, r: realized - feeR, gross: realized, feeR, exitReason, hitTp1: half, hitTp2 };
+  }
+  function simulate(x, sig, from, to) {
+    const trades = [], cost = (CFG.feePerSide + CFG.slippagePerSide) * 2;
+    for (let i = from; i <= to; i++) {
+      const v = sig[i]; if (!v) continue;
+      const t = tradeFrom(x, i, v === 'LONG' ? 1 : -1); if (!t) continue;
+      trades.push(t); if (t.open) break;
+      i = t.exitIdx - 1; // flat again from the exit bar
+    }
+    return stats(x, trades, from, to, cost);
+  }
+  function stats(x, trades, from, to, cost) {
+    const closed = trades.filter(t => !t.open), rs = closed.map(t => t.r), n = closed.length;
+    const wins = rs.filter(r => r > 0), losses = rs.filter(r => r <= 0);
+    let eqR = 0, peakR = 0, ddR = 0, eq = 1, peak = 1, dd = 0; const curve = [];
+    closed.forEach(t => { eqR += t.r; peakR = Math.max(peakR, eqR); ddR = Math.max(ddR, peakR - eqR); eq *= 1 + 0.01 * t.r; peak = Math.max(peak, eq); dd = Math.max(dd, (peak - eq) / peak); curve.push({ time: x.t[t.exitIdx], value: eqR }); });
+    const gp = wins.reduce((a, b) => a + b, 0), gl = -losses.reduce((a, b) => a + b, 0);
+    const winRate = n ? wins.length / n : NaN, avgWin = wins.length ? gp / wins.length : 0, avgLoss = losses.length ? gl / losses.length : 0;
+    return {
+      trades, curve, n, openTrade: trades.find(t => t.open) || null, winRate, avgWin, avgLoss,
+      expectancy: n ? winRate * avgWin - (1 - winRate) * avgLoss : NaN, // = win% x avg win - loss% x avg loss (in R)
+      tp1Rate: n ? closed.filter(t => t.hitTp1).length / n : NaN, tp2Rate: n ? closed.filter(t => t.hitTp2).length / n : NaN,
+      avgR: n ? rs.reduce((a, b) => a + b, 0) / n : NaN, totalR: eqR, maxDDR: ddR, maxDDPct: dd * 100,
+      profitFactor: gl > 0 ? gp / gl : (gp > 0 ? Infinity : NaN), from: x.t[from], to: x.t[Math.min(to, x.n - 1)], bars: to - from + 1, costPct: cost * 100,
+      meaningful: n >= CFG.minTradesMeaningful,
+    };
+  }
+  function backtestAll(x, htfName, withSeries) {
+    const s = signalSeries(x, htfName), split = s.start + Math.floor((s.lastClosed - s.start + 1) * (1 - CFG.oosFraction));
+    const out = { split: x.t[split], splitIdx: split, bars: x.n };
+    for (const m of ['raw', 'normal', 'aplus']) out[m] = { full: simulate(x, s[m], s.start, s.lastClosed), is: simulate(x, s[m], s.start, split - 1), oos: simulate(x, s[m], split, s.lastClosed) };
+    if (withSeries) out._s = s;
+    return out;
+  }
+  function backtest(x, htfName, useFilter = true) { const s = signalSeries(x, htfName); return simulate(x, useFilter === 'aplus' ? s.aplus : useFilter ? s.normal : s.raw, s.start, s.lastClosed); }
+  return { CFG, buildCtx, evaluate, marketCondition, trendState, plan, backtest, backtestAll, simulate, tradeFrom, fmtP, pct };
+})();
+</script>
+<script id="ml">
+/* ===== AI probability model: L2-regularized logistic regression, trained in the browser (Web Worker) =====
+   Question it answers: "if I take the engine's trade in the direction of the score on this closed bar
+   (ATR/swing stop, 1.5R TP1), does TP1 get hit before the stop?"
+   - Features: the engine's normalized indicator/factor readings at that bar, signed by trade direction.
+     Live-only futures data (funding, OI, long/short) is excluded because it has no free history.
+   - Train: first 70% of the history (samples whose outcome resolves inside the first 70% only — purged).
+   - Test: last 30%, never seen in training. Filter threshold is chosen inside the first 70% using
+     walk-forward out-of-fold predictions. All hyperparameters are fixed in advance (no tuning on the test part). */
+const ML = (() => {
+  const fin = Number.isFinite;
+  const P = { lambdas: [0.1, 1, 10, 100, 1000], iters: 25, folds: 5, grid: [0.30, 0.325, 0.35, 0.375, 0.40, 0.425, 0.45, 0.475, 0.50, 0.525, 0.55, 0.575, 0.60, 0.625, 0.65, 0.675, 0.70], minPassFrac: 0.10, minPass: 30 };
+  const NAMES = ['HTF trend aligned', 'Daily/top trend aligned', 'EMA stack aligned', 'ADX/50', 'CHOP/100', 'RSI (signed)', 'MACD hist / ATR (signed)', 'Bollinger %B (signed)',
+    'BB bandwidth pct', 'ATR% pct', 'log volume ratio', 'OBV slope (signed)', 'dist EMA20 (ATR, signed)', 'dist EMA50 (ATR, signed)', 'dist EMA200 (ATR, signed)', '|score|/100',
+    'factor agreement', 'Stoch RSI K (signed)', 'sideways', 'squeeze', 'volatile', 'stop distance (ATR)', 'divergence aligned', 'breakout aligned', 'setup aligned'];
+  const clip = (v, a) => !fin(v) ? 0 : v > a ? a : v < -a ? -a : v;
+  const st = s => s === 'bull' ? 1 : s === 'bear' ? -1 : 0;
+  function features(x, i, ev) {
+    const d = ev.dir, C = x.c[i], atr = x.atr[i], cd = ev.cond;
+    const stack = (ev.factors.find(f => f.label === 'EMA structure') || { val: 0 }).val / 15;
+    const R = Engine.plan(x, i, d, 3, C).R;
+    const f = ev.flags, setup = f.pullback || f.mr || 0;
+    return [
+      st(ev.htfState) * d, st(ev.topState) * d, stack * d, clip(x.adx[i] / 50, 2), fin(x.chop[i]) ? x.chop[i] / 100 : 0.5,
+      clip((x.rsi[i] - 50) / 50, 1) * d, clip(x.hist[i] / atr, 3) * d, clip((cd.bbPos - 0.5), 1.5) * d,
+      fin(x.bwRank[i]) ? x.bwRank[i] / 100 : 0.5, fin(x.atrRank[i]) ? x.atrRank[i] / 100 : 0.5, clip(Math.log(x.volRatio[i]), 3), clip(x.obvSlopeN[i], 2) * d,
+      clip((C - x.ema20[i]) / atr, 6) * d, clip((C - x.ema50[i]) / atr, 8) * d, fin(x.ema200[i]) ? clip((C - x.ema200[i]) / atr, 12) * d : 0,
+      Math.abs(ev.score) / 100, ev.agree, fin(x.stK[i]) ? clip((x.stK[i] - 50) / 50, 1) * d : 0,
+      cd.sideways ? 1 : 0, cd.squeeze ? 1 : 0, cd.shock || cd.spike ? 1 : 0, clip(R / atr, 5),
+      (f.reversal || 0) * d, (f.breakout || 0) * d, setup * d,
+    ];
+  }
+  const sig = z => 1 / (1 + Math.exp(-z));
+  function solve(A, b) { // Gaussian elimination with partial pivoting (small dense system)
+    const n = b.length, M = A.map((r, k) => [...r, b[k]]);
+    for (let c = 0; c < n; c++) {
+      let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+      [M[c], M[p]] = [M[p], M[c]]; const v = M[c][c] || 1e-12;
+      for (let r = c + 1; r < n; r++) { const k = M[r][c] / v; if (k) for (let q = c; q <= n; q++) M[r][q] -= k * M[c][q]; }
+    }
+    const out = new Array(n).fill(0);
+    for (let r = n - 1; r >= 0; r--) { let s = M[r][n]; for (let q = r + 1; q < n; q++) s -= M[r][q] * out[q]; out[r] = s / (M[r][r] || 1e-12); }
+    return out;
+  }
+  // Fit on rows X (raw features) and 0/1 labels y. Standardizes with training mean/std, Newton-Raphson (IRLS), L2 on weights (not intercept).
+  function fit(X, y, lambda) {
+    const n = X.length, k = X[0].length, mu = new Array(k).fill(0), sd = new Array(k).fill(0);
+    X.forEach(r => r.forEach((v, j) => mu[j] += v / n)); X.forEach(r => r.forEach((v, j) => sd[j] += (v - mu[j]) ** 2 / n));
+    for (let j = 0; j < k; j++) sd[j] = Math.sqrt(sd[j]) || 1;
+    const Z = X.map(r => [1, ...r.map((v, j) => (v - mu[j]) / sd[j])]), m = k + 1;
+    let w = new Array(m).fill(0); const pr = y.reduce((a, b) => a + b, 0) / n; w[0] = Math.log(Math.max(1e-3, pr) / Math.max(1e-3, 1 - pr));
+    for (let it = 0; it < P.iters; it++) {
+      const g = new Array(m).fill(0), H = Array.from({ length: m }, () => new Array(m).fill(0));
+      for (let r = 0; r < n; r++) {
+        const z = Z[r]; let s = 0; for (let j = 0; j < m; j++) s += w[j] * z[j];
+        const p = sig(s), e = p - y[r], ww = Math.max(p * (1 - p), 1e-6);
+        for (let a = 0; a < m; a++) { g[a] += e * z[a]; const za = z[a] * ww; for (let b = a; b < m; b++) H[a][b] += za * z[b]; }
+      }
+      for (let a = 0; a < m; a++) { for (let b = 0; b < a; b++) H[a][b] = H[b][a]; if (a > 0) { H[a][a] += lambda; g[a] += lambda * w[a]; } }
+      const step = solve(H, g); let mx = 0; for (let j = 0; j < m; j++) { w[j] -= step[j]; mx = Math.max(mx, Math.abs(step[j])); }
+      if (mx < 1e-6) break;
+    }
+    return { w, mu, sd, n, baseRate: pr };
+  }
+  function predict(model, f) { if (!model || !f) return NaN; let s = model.w[0]; for (let j = 0; j < f.length; j++) s += model.w[j + 1] * (f[j] - model.mu[j]) / model.sd[j]; return sig(s); }
+  function auc(p, y) {
+    const idx = p.map((v, k) => k).sort((a, b) => p[a] - p[b]); let rank = 0, sumPos = 0, nPos = 0;
+    for (let a = 0; a < idx.length;) { let b = a; while (b + 1 < idx.length && p[idx[b + 1]] === p[idx[a]]) b++; const r = (a + b) / 2 + 1; for (let q = a; q <= b; q++) if (y[idx[q]]) { sumPos += r; nPos++; } a = b + 1; }
+    const nNeg = y.length - nPos; return nPos && nNeg ? (sumPos - nPos * (nPos + 1) / 2) / (nPos * nNeg) : NaN;
+  }
+  function metrics(p, y, refRate) {
+    const n = y.length; if (!n) return { n: 0 };
+    const base = y.reduce((a, b) => a + b, 0) / n, brier = p.reduce((a, v, k) => a + (v - y[k]) ** 2, 0) / n, brierRef = y.reduce((a, v) => a + (refRate - v) ** 2, 0) / n;
+    const acc = p.reduce((a, v, k) => a + ((v >= 0.5 ? 1 : 0) === y[k] ? 1 : 0), 0) / n, accRef = y.reduce((a, v) => a + (v === (refRate >= 0.5 ? 1 : 0) ? 1 : 0), 0) / n;
+    const bins = [[0, 0.3], [0.3, 0.4], [0.4, 0.5], [0.5, 0.6], [0.6, 1.01]].map(([lo, hi]) => { const ks = p.map((v, k) => k).filter(k => p[k] >= lo && p[k] < hi); return { lo, hi, n: ks.length, pred: ks.length ? ks.reduce((a, k) => a + p[k], 0) / ks.length : NaN, actual: ks.length ? ks.reduce((a, k) => a + y[k], 0) / ks.length : NaN }; });
+    return { n, base, auc: auc(p, y), brier, brierRef, acc, accRef, bins, meanP: p.reduce((a, b) => a + b, 0) / n };
+  }
+  // samples: bars in [lo, hi) whose hypothetical trade has resolved before `resolveBy` (purging: no label peeks past the boundary)
+  function rows(s, lo, hi, resolveBy) {
+    const X = [], y = [], r = [], idx = [];
+    for (let i = lo; i < hi; i++) { const o = s.outc[i], f = s.feat[i]; if (!o || o.open || !f || o.exitIdx >= resolveBy || !f.every(fin)) continue; X.push(f); y.push(o.hitTp1 ? 1 : 0); r.push(o.r); idx.push(i); }
+    return { X, y, r, idx };
+  }
+  function run(x, s, split) {
+    const start = s.start, last = s.lastClosed;
+    const tr = rows(s, start, split, split);
+    if (tr.X.length < 200) return { ok: false, reason: `only ${tr.X.length} training samples` };
+    // 1) walk-forward out-of-fold predictions inside the training part (training data only):
+    //    pick the L2 strength by out-of-fold log-loss, then the filter threshold by out-of-fold average R
+    const L = split - start, folds = [];
+    for (let k = 1; k < P.folds; k++) {
+      const a = start + Math.floor(L * k / P.folds), b = start + Math.floor(L * (k + 1) / P.folds);
+      const trk = rows(s, start, a, a), tek = rows(s, a, b, split); if (trk.X.length >= 100 && tek.X.length) folds.push({ trk, tek });
+    }
+    let lambda = 10, bestLL = Infinity, oofP = [], oofR = []; const lamLL = [];
+    for (const lam of P.lambdas) {
+      const pp = [], rr = [], yy = [];
+      folds.forEach(({ trk, tek }) => { const mk = fit(trk.X, trk.y, lam); tek.X.forEach((f, q) => { pp.push(predict(mk, f)); rr.push(tek.r[q]); yy.push(tek.y[q]); }); });
+      const ll = pp.reduce((a, p, q) => a - (yy[q] ? Math.log(Math.max(p, 1e-9)) : Math.log(Math.max(1 - p, 1e-9))), 0) / (pp.length || 1);
+      lamLL.push({ lambda: lam, logloss: ll }); if (ll < bestLL - 1e-12) { bestLL = ll; lambda = lam; oofP = pp; oofR = rr; }
+    }
+    let thr = 0.5, thrAvgR = NaN; const allAvg = oofR.length ? oofR.reduce((a, b) => a + b, 0) / oofR.length : NaN;
+    const need = Math.max(P.minPass, Math.ceil(oofP.length * P.minPassFrac)); let best = -Infinity;
+    for (const t of P.grid) { const ks = oofP.map((p, q) => q).filter(q => oofP[q] >= t); if (ks.length < need) continue; const m = ks.reduce((a, q) => a + oofR[q], 0) / ks.length; if (m > best + 1e-9) { best = m; thr = t; thrAvgR = m; } }
+    // 2) final evaluation model: fit on the whole training part, score the untouched last 30%
+    const model = fit(tr.X, tr.y, lambda);
+    const te = rows(s, split, last + 1, Infinity);
+    const pTe = te.X.map(f => predict(model, f)), pTr = tr.X.map(f => predict(model, f));
+    const oos = metrics(pTe, te.y, model.baseRate), ins = metrics(pTr, tr.y, model.baseRate);
+    const oosTp2 = te.idx.length ? te.idx.filter(i => s.outc[i].hitTp2).length / te.idx.length : NaN;
+    // per-bar probabilities for the AI-filtered backtest (training part = in-sample fit, test part = out-of-sample)
+    const prob = new Array(s.feat.length).fill(NaN);
+    for (let i = start; i <= last; i++) if (s.feat[i] && s.feat[i].every(fin)) prob[i] = predict(model, s.feat[i]);
+    const filt = (arr) => arr.map((v, i) => v && prob[i] >= thr ? v : null);
+    const bt = {};
+    for (const m of ['normal', 'aplus']) { const a = filt(s[m]); bt[m + 'AI'] = { full: Engine.simulate(x, a, start, last), is: Engine.simulate(x, a, start, split - 1), oos: Engine.simulate(x, a, split, last) }; }
+    // 3) live model: same recipe refit on every resolved sample (the displayed probability); threshold unchanged
+    const al = rows(s, start, last + 1, Infinity), live = fit(al.X, al.y, lambda);
+    const wNamed = NAMES.map((nm, j) => ({ name: nm, w: model.w[j + 1] })).sort((a, b) => Math.abs(b.w) - Math.abs(a.w));
+    return { ok: true, thr, thrAvgR, thrAllAvgR: allAvg, oofN: oofP.length, nTrain: tr.X.length, nTest: te.X.length, oos, ins, oosTp2, bt, live, top: wNamed.slice(0, 6), params: { lambda, lamLL, folds: P.folds }, splitIdx: split };
+  }
+  return { features, fit, predict, run, metrics, auc, NAMES, P };
+})();
+</script>
+<script id="app">
+/* ===== App: data layer (OKX primary, Gate.io fallback), rendering, refresh, mobile + PWA ===== */
+(() => {
+  const LWC = window.LightweightCharts;
+  const fin = Number.isFinite, fmtP = Engine.fmtP;
+  const SYMBOLS = {
+    BTC: { okx: 'BTC-USDT-SWAP', gate: 'BTC_USDT' }, ETH: { okx: 'ETH-USDT-SWAP', gate: 'ETH_USDT' }, SOL: { okx: 'SOL-USDT-SWAP', gate: 'SOL_USDT' },
+    XRP: { okx: 'XRP-USDT-SWAP', gate: 'XRP_USDT' }, DOGE: { okx: 'DOGE-USDT-SWAP', gate: 'DOGE_USDT' }, BNB: { okx: 'BNB-USDT-SWAP', gate: 'BNB_USDT' },
+  };
+  const TFS = {
+    '15m': { okx: '15m', gate: '15m', sec: 900, htf: '1h', top: '1d' }, '1h': { okx: '1H', gate: '1h', sec: 3600, htf: '4h', top: '1d' },
+    '4h': { okx: '4H', gate: '4h', sec: 14400, htf: '1d', top: null }, '1d': { okx: '1Dutc', gate: '1d', sec: 86400, htf: '1w', top: null },
+    '1w': { okx: '1Wutc', gate: '7d', sec: 604800 },
+  };
+  const MAIN_TFS = ['15m', '1h', '4h', '1d'];
+  const LTF_BARS = 1200, HTF_BARS = 600, TOP_BARS = 400, MTF_BARS = 600, DEEP_BARS = 3000, REFRESH_SEC = 45, MTF_TTL = 90e3, DEEP_TTL = 30 * 60e3;
+  const TZ_SHIFT = -new Date().getTimezoneOffset() * 60; // display chart times in local time
+  const NT = "DON'T TRADE";
+  const S = { sym: localStorage.getItem('fst_sym') || 'BTC', tf: localStorage.getItem('fst_tf') || '1h', mode: localStorage.getItem('fst_mode') === 'aplus' ? 'aplus' : 'normal',
+    loading: false, loadSeq: 0, lastKey: null, data: null, countdown: REFRESH_SEC, lastLoadAt: 0,
+    tab: 'breakdown', rendered: {}, ai: localStorage.getItem('fst_ai') === '1', chat: [], aiBusy: false, ver: 0, mtf: {}, candleCache: {}, deepCache: {}, btCache: new Map(), feedError: null,
+    show: { rsi: localStorage.getItem('fst_rsi') !== '0', macd: localStorage.getItem('fst_macd') !== '0', chop: localStorage.getItem('fst_chop') !== '0' } };
+  if (!SYMBOLS[S.sym]) S.sym = 'BTC'; if (!MAIN_TFS.includes(S.tf)) S.tf = '1h';
+  window.__app = S;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const ICON = {
+    LONG: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 8h-4.5v8h-5v-8H5z" fill="#fff"/></svg>',
+    SHORT: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20l-7-8h4.5V4h5v8H19z" fill="#fff"/></svg>',
+    NOTRADE: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="#f5b041"/><rect x="14" y="5" width="4" height="14" rx="1" fill="#f5b041"/></svg>',
+  };
+  const WORD = { LONG: 'LONG', SHORT: 'SHORT', NOTRADE: NT };
+  const MODE_NAME = { raw: 'Previous engine (no filter)', normal: 'Normal (no-trade filter)', aplus: 'A+ setups only', normalAI: 'Normal + AI filter', aplusAI: 'A+ + AI filter' };
+  const pc = v => fin(v) ? Math.round(v * 100) + '%' : '—';
+  // the verdict the user sees depends on the mode: A+ adds stricter requirements on top of the normal verdict
+  function modeView(ev) {
+    let v = ev;
+    if (S.mode === 'aplus') { const a = ev.aplus, blocks = ev.vkey === 'NOTRADE' ? [...ev.blocks, ...a.fails] : a.fails; v = { ...ev, verdict: a.verdict, vkey: a.vkey, blocks }; }
+    // optional AI filter (current timeframe only, once the model is trained): it can only remove a signal, never create one
+    if (S.ai && ev.ai && v.vkey !== 'NOTRADE') {
+      if (!ev.ai.ready) v = { ...v, cautions: [...v.cautions, ev.ai.failed ? `AI filter is on but the model is unavailable (${ev.ai.failed}) — this signal is not AI-checked` : 'AI filter is on but the model is still training — this signal is not AI-checked yet'] };
+      else if (!(ev.ai.p >= ev.ai.thr)) v = { ...v, verdict: NT, vkey: 'NOTRADE', blocks: [...v.blocks, `AI filter: estimated probability of reaching TP1 before the stop is ${pc(ev.ai.p)}, below the ${pc(ev.ai.thr)} threshold chosen on training data`] };
+    }
+    return v;
+  }
+  // AI probability for the live bar from the model trained in the worker (same symbol/timeframe)
+  function mlSkill(ml) {
+    const o = ml.oos, a = o.auc, beatsBrier = o.brier < o.brierRef;
+    if (!(a >= 0.55) || !beatsBrier) return { ok: false, short: `weak: out-of-sample AUC ${fin(a) ? a.toFixed(2) : '—'}`, long: `no reliable edge out-of-sample — AUC ${fin(a) ? a.toFixed(3) : '—'} (0.5 = coin flip), Brier ${o.brier.toFixed(3)} vs ${o.brierRef.toFixed(3)} for always guessing the base rate${beatsBrier ? '' : ' (worse than the naive guess)'}. Treat the probability as noise.` };
+    return { ok: true, short: `out-of-sample AUC ${a.toFixed(2)}`, long: `some out-of-sample skill — AUC ${a.toFixed(3)}, Brier ${o.brier.toFixed(3)} vs ${o.brierRef.toFixed(3)} for the base-rate guess. Still a rough estimate, not a promise.` };
+  }
+  function filterVerdict(bt) {
+    const a = bt.ml.bt.normalAI.oos, b = bt.normal.oos, f = v => fin(v) ? (v >= 0 ? '+' : '') + v.toFixed(2) + 'R' : '—';
+    if (!a.n) return { good: false, text: `Out-of-sample the AI filter let no Normal-mode trades through (${b.n} without it) — nothing to judge; it did not beat the plain rules.` };
+    if (b.n && Math.abs(a.expectancy - b.expectancy) < 0.005) return { good: false, text: `Out-of-sample the AI filter made no meaningful difference: expectancy ${f(a.expectancy)} on ${a.n} trades with it vs ${f(b.expectancy)} on ${b.n} without it — it did not beat the plain rules.` };
+    if (!(a.expectancy > (b.n ? b.expectancy : -Infinity))) return { good: false, text: `Out-of-sample the AI filter did NOT beat the plain rules: expectancy ${f(a.expectancy)} on ${a.n} trades with it vs ${f(b.expectancy)} on ${b.n} without it.` };
+    if (a.n < Engine.CFG.minTradesMeaningful) return { good: false, text: `Out-of-sample the AI filter improved expectancy (${f(a.expectancy)} vs ${f(b.expectancy)}), but on only ${a.n} trades — far too few to trust; treat as unproven.` };
+    return { good: true, text: `Out-of-sample the AI filter improved expectancy: ${f(a.expectancy)} on ${a.n} trades vs ${f(b.expectancy)} on ${b.n} without it.` };
+  }
+  function attachAI(D) {
+    const ml = D.bt && D.bt.ml;
+    if (!ml) { D.evRaw.ai = { ready: false, failed: D.btFailed || null }; return; }
+    if (!ml.ok) { D.evRaw.ai = { ready: false, failed: ml.reason }; return; }
+    let p = NaN; try { p = ML.predict(ml.live, ML.features(D.x, D.evRaw.i, D.evRaw)); } catch (e) { }
+    D.evRaw.ai = fin(p) ? { ready: true, p, thr: ml.thr, base: ml.live.baseRate, skill: mlSkill(ml), dir: D.evRaw.dir } : { ready: false, failed: 'features unavailable on this bar' };
+  }
+
+  /* ---------- data layer ---------- */
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function getJSON(url, ms = 10000, retries = 3) {
+    for (let a = 0; ; a++) {
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), ms);
+      try {
+        const r = await fetch(url, { signal: ctl.signal, cache: 'no-store' });
+        if (r.status === 429 && a < retries) { await sleep(800 * (a + 1) + Math.random() * 400); continue; } // rate-limited: back off, retry
+        if (!r.ok) throw new Error(`HTTP ${r.status}`); return await r.json();
+      } finally { clearTimeout(to); }
+    }
+  }
+  // market/candles serves the most recent 1,440 bars (300/page); older bars come from history-candles (100/page, 20 req/2s)
+  async function okxCandles(inst, bar, count, sec) {
+    let rows = [], after = '', hist = false;
+    while (rows.length < count) {
+      const ep = hist ? 'history-candles' : 'candles', lim = hist ? 100 : 300;
+      const j = await getJSON(`https://www.okx.com/api/v5/market/${ep}?instId=${inst}&bar=${bar}&limit=${lim}${after ? '&after=' + after : ''}`);
+      if (j.code !== '0') throw new Error('OKX ' + j.msg);
+      if (!j.data.length) { if (!hist && count > rows.length && rows.length >= 1400) { hist = true; continue; } break; }
+      rows = rows.concat(j.data); after = j.data[j.data.length - 1][0];
+      if (hist) await sleep(160); else if (j.data.length < lim && rows.length < 1400) break; else await sleep(60);
+    }
+    const m = new Map();
+    rows.forEach(r => m.set(+r[0], { t: +r[0] / 1000, o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[6], closed: r[8] === '1' }));
+    const out = [...m.values()].sort((a, b) => a.t - b.t);
+    if (out.length < 60) throw new Error('OKX: too few candles');
+    return out.slice(-count);
+  }
+  async function gateCandles(contract, interval, count, sec) {
+    const j = await getJSON(`https://api.gateio.ws/api/v4/futures/usdt/candlesticks?contract=${contract}&interval=${interval}&limit=${Math.min(count, 1999)}`);
+    if (!Array.isArray(j) || j.length < 60) throw new Error('Gate: too few candles');
+    const now = Date.now() / 1000;
+    return j.map(r => ({ t: +r.t, o: +r.o, h: +r.h, l: +r.l, c: +r.c, v: (+r.sum || 0) / (+r.c || 1), closed: +r.t + sec <= now })).sort((a, b) => a.t - b.t);
+  }
+  async function candles(sym, tfKey, count, prefer) {
+    const tf = TFS[tfKey], s = SYMBOLS[sym], errs = [];
+    const order = prefer === 'Gate.io' ? ['Gate.io', 'OKX'] : ['OKX', 'Gate.io'];
+    for (const src of order) {
+      try { return { src, c: src === 'OKX' ? await okxCandles(s.okx, tf.okx, count, tf.sec) : await gateCandles(s.gate, tf.gate, count, tf.sec) }; }
+      catch (e) { errs.push(`${src}: ${e.message}`); console.warn('candle source failed', src, e.message); }
+    }
+    throw new Error('All candle sources failed — ' + errs.join('; '));
+  }
+  async function futuresData(sym) {
+    const s = SYMBOLS[sym], out = { sources: {} };
+    const [tk, fr, fh, oi, gs, gt, gf] = await Promise.allSettled([
+      getJSON(`https://www.okx.com/api/v5/market/ticker?instId=${s.okx}`),
+      getJSON(`https://www.okx.com/api/v5/public/funding-rate?instId=${s.okx}`),
+      getJSON(`https://www.okx.com/api/v5/public/funding-rate-history?instId=${s.okx}&limit=30`),
+      getJSON(`https://www.okx.com/api/v5/public/open-interest?instType=SWAP&instId=${s.okx}`),
+      getJSON(`https://api.gateio.ws/api/v4/futures/usdt/contract_stats?contract=${s.gate}&interval=1h&limit=49`),
+      getJSON(`https://api.gateio.ws/api/v4/futures/usdt/tickers?contract=${s.gate}`),
+      getJSON(`https://api.gateio.ws/api/v4/futures/usdt/funding_rate?contract=${s.gate}&limit=30`),
+    ]);
+    const ok = p => p.status === 'fulfilled' && p.value && (p.value.code === undefined || p.value.code === '0') ? p.value : null;
+    const T = ok(tk), G = ok(gt);
+    if (T && T.data?.[0]) { const d = T.data[0]; out.last = +d.last; out.priceChg24 = (+d.last / +d.open24h - 1) * 100; out.sources.ticker = 'OKX'; }
+    else if (G && G[0]) { out.last = +G[0].last; out.priceChg24 = +G[0].change_percentage; out.sources.ticker = 'Gate.io'; }
+    const FH = ok(fh), GF = ok(gf);
+    if (FH && FH.data?.length) { out.fundHist = FH.data.map(d => ({ t: +d.fundingTime / 1000, r: +d.realizedRate || +d.fundingRate })).reverse(); out.sources.fundHist = 'OKX'; }
+    else if (GF && GF.length) { out.fundHist = GF.map(d => ({ t: +d.t, r: +d.r })).reverse(); out.sources.fundHist = 'Gate.io'; }
+    if (out.fundHist?.length > 2) { const n = out.fundHist.length; out.fundIntervalH = Math.round((out.fundHist[n - 1].t - out.fundHist[n - 2].t) / 3600) || 8; } else out.fundIntervalH = 8;
+    const FR = ok(fr);
+    if (FR && FR.data?.[0]) { out.funding = +FR.data[0].fundingRate; out.nextFunding = +FR.data[0].fundingTime / 1000; out.sources.funding = 'OKX'; }
+    else if (G && G[0]) { out.funding = +G[0].funding_rate; out.sources.funding = 'Gate.io'; }
+    out.funding8h = fin(out.funding) ? out.funding * 8 / out.fundIntervalH : NaN;
+    const OI = ok(oi);
+    if (OI && OI.data?.[0]) { out.oiUsd = +OI.data[0].oiUsd; out.oiCoin = +OI.data[0].oiCcy; out.sources.oi = 'OKX'; }
+    const GS = ok(gs);
+    if (Array.isArray(GS) && GS.length >= 25) {
+      const st = GS.slice().sort((a, b) => a.time - b.time), L = st[st.length - 1], P = st[st.length - 25];
+      out.oiChg24 = (L.open_interest / P.open_interest - 1) * 100; out.lsr = +L.lsr_account; out.topLsr = +L.top_lsr_size;
+      out.liqLong24 = st.slice(-24).reduce((a, x) => a + (+x.long_liq_usd_new || +x.long_liq_usd || 0), 0);
+      out.liqShort24 = st.slice(-24).reduce((a, x) => a + (+x.short_liq_usd_new || +x.short_liq_usd || 0), 0);
+      out.oiSeries = st.map(x => ({ t: x.time, v: x.open_interest_usd })); out.gateOiUsd = L.open_interest_usd; out.sources.positioning = 'Gate.io';
+      if (!fin(out.oiUsd)) { out.oiUsd = L.open_interest_usd; out.sources.oi = 'Gate.io'; }
+    }
+    return out;
+  }
+
+  /* ---------- chart ---------- */
+  let chart, sr = {}, sub = {}, markersApi, planLines = [], eqChart;
+  const isPhone = () => window.matchMedia('(max-width:1024px)').matches;
+  function initChart() {
+    chart = LWC.createChart($('chart'), {
+      autoSize: true,
+      layout: { background: { type: 'solid', color: '#101620' }, textColor: '#7d8a9c', fontSize: 11, panes: { separatorColor: '#1e2835', separatorHoverColor: '#263243', enableResize: true } },
+      grid: { vertLines: { color: '#151d29' }, horzLines: { color: '#151d29' } },
+      rightPriceScale: { borderColor: '#1e2835', minimumWidth: 56 }, timeScale: { borderColor: '#1e2835', timeVisible: true, secondsVisible: false, rightOffset: 8 },
+      crosshair: { mode: LWC.CrosshairMode.Normal },
+      // touch: horizontal drag pans, pinch zooms; vertical swipes scroll the page instead of the chart
+      handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
+      handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
+      kineticScroll: { touch: true, mouse: false },
+    });
+    const line = (color, w, pane, extra = {}) => chart.addSeries(LWC.LineSeries, { color, lineWidth: w, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, ...extra }, pane);
+    // chop/squeeze shading: full-height histogram on its own hidden scale, added first so it sits behind the candles
+    sr.chop = chart.addSeries(LWC.HistogramSeries, { priceScaleId: 'chop', lastValueVisible: false, priceLineVisible: false, base: 0 }, 0);
+    sr.chop.priceScale().applyOptions({ scaleMargins: { top: 0, bottom: 0 }, visible: false });
+    sr.bbUp = line('rgba(100,116,139,.55)', 1, 0, { lineStyle: 2 }); sr.bbLo = line('rgba(100,116,139,.55)', 1, 0, { lineStyle: 2 }); sr.bbMid = line('rgba(100,116,139,.35)', 1, 0, { lineStyle: 1 });
+    sr.vol = chart.addSeries(LWC.HistogramSeries, { priceFormat: { type: 'volume' }, priceScaleId: 'vol', lastValueVisible: false, priceLineVisible: false }, 0);
+    sr.vol.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+    sr.candle = chart.addSeries(LWC.CandlestickSeries, { upColor: '#1fc77e', downColor: '#f0506e', borderVisible: false, wickUpColor: '#1fc77e', wickDownColor: '#f0506e' }, 0);
+    sr.candle.priceScale().applyOptions({ scaleMargins: { top: 0.06, bottom: 0.2 } });
+    sr.ema20 = line('#f5b041', 1.5, 0); sr.ema50 = line('#4c9aff', 1.5, 0); sr.ema200 = line('#e879f9', 2, 0);
+    markersApi = LWC.createSeriesMarkers(sr.candle, []);
+    buildSubPanes();
+    chart.subscribeCrosshairMove(p => updateLegend(p && p.time ? p.time : null));
+  }
+  // RSI / MACD panes can be toggled (useful on phones); panes are rebuilt so hidden ones take no space
+  function buildSubPanes() {
+    Object.values(sub).forEach(s => { try { chart.removeSeries(s); } catch (e) { } }); sub = {};
+    let pane = 1;
+    const line = (color, w, p, extra = {}) => chart.addSeries(LWC.LineSeries, { color, lineWidth: w, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, ...extra }, p);
+    if (S.show.rsi) {
+      sub.rsi = line('#a78bfa', 1.5, pane, { lastValueVisible: true, title: 'RSI 14' });
+      [70, 50, 30].forEach(p => sub.rsi.createPriceLine({ price: p, color: p === 50 ? '#2a3544' : '#3b4a5e', lineWidth: 1, lineStyle: 2, axisLabelVisible: false }));
+      pane++;
+    }
+    if (S.show.macd) {
+      sub.hist = chart.addSeries(LWC.HistogramSeries, { priceLineVisible: false, lastValueVisible: false, title: 'MACD 12,26,9' }, pane);
+      sub.macd = line('#4c9aff', 1.3, pane); sub.sig = line('#f5b041', 1.3, pane);
+    }
+    setPaneSizes();
+    if (S.data) fillSubPanes(S.data);
+    syncToggles();
+  }
+  function syncToggles() { document.querySelectorAll('.tog').forEach(b => { b.classList.toggle('on', !!S.show[b.dataset.tog]); b.setAttribute('aria-pressed', !!S.show[b.dataset.tog]); }); }
+  function setPaneSizes() {
+    try { const p = chart.panes(); p[0].setStretchFactor(isPhone() ? 3.2 : 5); for (let k = 1; k < p.length; k++) p[k].setStretchFactor(isPhone() ? 1.2 : 1.6); } catch (e) { }
+  }
+  const ct = t => t + TZ_SHIFT;
+  const series = (x, arr) => arr.map((v, i) => fin(v) ? { time: ct(x.t[i]), value: v } : null).filter(Boolean);
+  function priceFmt(p) { const a = Math.abs(p); const pr = a >= 1000 ? 1 : a >= 10 ? 2 : a >= 1 ? 4 : 5; return { type: 'price', precision: pr, minMove: 1 / 10 ** pr }; }
+  function fillSubPanes(D) {
+    const x = D.x;
+    if (sub.rsi) sub.rsi.setData(series(x, x.rsi));
+    if (sub.hist) {
+      sub.hist.setData(x.hist.map((v, i) => fin(v) ? { time: ct(x.t[i]), value: v, color: v >= 0 ? (v >= x.hist[i - 1] ? 'rgba(31,199,126,.8)' : 'rgba(31,199,126,.4)') : (v <= x.hist[i - 1] ? 'rgba(240,80,110,.8)' : 'rgba(240,80,110,.4)') } : null).filter(Boolean));
+      sub.macd.setData(series(x, x.macd)); sub.sig.setData(series(x, x.signal));
+    }
+  }
+  function fillChop(D) {
+    const x = D.x;
+    sr.chop.setData(S.show.chop ? x.cond.map((c, i) => c && (c.key === 'sideways' || c.key === 'squeeze') ? { time: ct(x.t[i]), value: 1, color: c.key === 'squeeze' ? 'rgba(245,176,65,.07)' : 'rgba(148,163,184,.075)' } : null).filter(Boolean) : []);
+  }
+  function renderChart(D, resetView) {
+    const x = D.x, pf = priceFmt(x.c[x.n - 1]);
+    sr.candle.applyOptions({ priceFormat: pf });
+    [sr.ema20, sr.ema50, sr.ema200, sr.bbUp, sr.bbLo, sr.bbMid].forEach(s => s.applyOptions({ priceFormat: pf }));
+    sr.candle.setData(D.c.map(k => ({ time: ct(k.t), open: k.o, high: k.h, low: k.l, close: k.c })));
+    sr.vol.setData(D.c.map(k => ({ time: ct(k.t), value: k.v, color: k.c >= k.o ? 'rgba(31,199,126,.28)' : 'rgba(240,80,110,.28)' })));
+    sr.ema20.setData(series(x, x.ema20)); sr.ema50.setData(series(x, x.ema50)); sr.ema200.setData(series(x, x.ema200));
+    sr.bbUp.setData(series(x, x.bbUp)); sr.bbLo.setData(series(x, x.bbLo)); sr.bbMid.setData(series(x, x.bbMid));
+    fillChop(D); fillSubPanes(D); renderMarkers(D); renderPlanLines(D);
+    if (resetView) { setPaneSizes(); chart.timeScale().setVisibleLogicalRange({ from: x.n - (isPhone() ? 90 : 170), to: x.n + 4 }); }
+    updateLegend(null);
+  }
+  function renderPlanLines(D) {
+    planLines.forEach(l => sr.candle.removePriceLine(l)); planLines = [];
+    if (D.ev.vkey === 'NOTRADE' || !D.plan) return;
+    const p = D.plan, add = (price, color, title, style = 2) => planLines.push(sr.candle.createPriceLine({ price, color, title, lineWidth: 1, lineStyle: style, axisLabelVisible: true }));
+    add(p.entry, '#cbd5e1', 'Entry'); add(p.stop, '#f0506e', 'SL', 0); add(p.tp1, '#1fc77e', 'TP1'); add(p.tp2, '#1fc77e', 'TP2');
+  }
+  // green up-arrows = long entries, red down-arrows = short entries (backtest of the selected mode), dot = live signal
+  function renderMarkers(D) {
+    const x = D.x, mk = [], first = x.t[0], set = new Set(x.t);
+    const tr = D.bt ? D.bt[S.mode].full.trades : [];
+    tr.forEach(t => {
+      if (t.entryT < first || !set.has(t.entryT)) return;
+      const L = t.dir === 1, txt = (L ? 'L' : 'S') + (t.open ? ' open' : ` ${t.r >= 0 ? '+' : ''}${t.r.toFixed(1)}R`);
+      mk.push({ time: ct(t.entryT), position: L ? 'belowBar' : 'aboveBar', color: L ? '#1fc77e' : '#f0506e', shape: L ? 'arrowUp' : 'arrowDown', text: txt });
+    });
+    if (D.ev.vkey !== 'NOTRADE') mk.push({ time: ct(x.t[D.ev.i]), position: D.ev.vkey === 'LONG' ? 'belowBar' : 'aboveBar', color: D.ev.vkey === 'LONG' ? '#1fc77e' : '#f0506e', shape: 'circle', text: 'NOW ' + D.ev.verdict });
+    mk.sort((a, b) => a.time - b.time);
+    markersApi.setMarkers(mk);
+  }
+  function updateLegend(time) {
+    const D = S.data; if (!D) return; const x = D.x;
+    let i = x.n - 1; if (time != null) { const t = time - TZ_SHIFT; const k = x.t.indexOf(t); if (k >= 0) i = k; }
+    const f = v => fin(v) ? fmtP(v) : '—', c = x.c[i] >= x.o[i] ? 'up' : 'dn';
+    const dt = new Date(x.t[i] * 1000), cd = x.cond[i];
+    $('legend').innerHTML = `<span><b style="color:#e2e8f0">${S.sym} · ${S.tf}</b> <span>${dt.toLocaleString([], { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></span>
+      <span class="${c}">O ${f(x.o[i])} H ${f(x.h[i])} L ${f(x.l[i])} C ${f(x.c[i])}</span>
+      <span class="lg-ema20">EMA20 ${f(x.ema20[i])}</span><span class="lg-ema50">EMA50 ${f(x.ema50[i])}</span><span class="lg-ema200">EMA200 ${f(x.ema200[i])}</span>
+      <span class="lg-bb">BB(20,2) ${f(x.bbUp[i])} / ${f(x.bbLo[i])}</span><span class="lg-opt" style="color:#a78bfa">RSI ${fin(x.rsi[i]) ? x.rsi[i].toFixed(1) : '—'}</span>
+      ${cd ? `<span class="lg-opt" style="color:#94a3b8">${cd.label} · CHOP ${fin(cd.chop) ? cd.chop.toFixed(0) : '—'}</span>` : ''}`;
+  }
+
+  /* ---------- verdict / plan ---------- */
+  function num(id, dflt) { const v = parseFloat($(id).value); return fin(v) && v > 0 ? v : dflt; }
+  function setFavicon(vkey) {
+    try {
+      const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+      g.fillStyle = vkey === 'LONG' ? '#14b86f' : vkey === 'SHORT' ? '#e5445f' : '#454e5f';
+      g.beginPath(); g.arc(32, 32, 30, 0, Math.PI * 2); g.fill(); g.fillStyle = vkey === 'NOTRADE' ? '#f5b041' : '#fff'; g.beginPath();
+      if (vkey === 'LONG') { g.moveTo(32, 12); g.lineTo(50, 34); g.lineTo(39, 34); g.lineTo(39, 52); g.lineTo(25, 52); g.lineTo(25, 34); g.lineTo(14, 34); }
+      else if (vkey === 'SHORT') { g.moveTo(32, 52); g.lineTo(50, 30); g.lineTo(39, 30); g.lineTo(39, 12); g.lineTo(25, 12); g.lineTo(25, 30); g.lineTo(14, 30); }
+      else { g.rect(20, 17, 9, 30); g.rect(35, 17, 9, 30); }
+      g.fill(); $('favicon').href = c.toDataURL('image/png');
+    } catch (e) { }
+  }
+  function renderVerdict(D) {
+    const ev = D.ev, x = D.x, k = ev.vkey, ap = S.mode === 'aplus';
+    $('vTitle').innerHTML = `${S.sym} · ${S.tf} · closed bar opened ${new Date(x.t[ev.i] * 1000).toLocaleString([], { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}${ap ? '<span class="aplusTag">A+ MODE</span>' : ''}`;
+    $('vBanner').className = 'banner ' + k; $('vIcon').innerHTML = ICON[k]; $('vWord').textContent = WORD[k];
+    $('vSub').textContent = k === 'LONG' ? (ap ? 'A+ setup · ' : '') + (ev.flags.setup || 'Trend & momentum aligned up') : k === 'SHORT' ? (ap ? 'A+ setup · ' : '') + (ev.flags.setup || 'Trend & momentum aligned down') : 'Stand aside — ' + (ev.blocks.length === 1 ? '1 reason' : ev.blocks.length + ' reasons') + ' below';
+    $('vScore').textContent = (ev.score > 0 ? '+' : '') + ev.score;
+    $('vConf').textContent = k === 'NOTRADE' ? `lean ${ev.dir === 1 ? 'long' : 'short'} · ${ev.confidence.toLowerCase()}` : `${ev.confidence} confidence`;
+    $('vPill').textContent = (ap ? 'A+ ' : '') + WORD[k]; $('vPill').className = 'vpill ' + k;
+    $('vCond').textContent = 'Market: ' + ev.cond.label; $('vCond').className = 'cond ' + ev.cond.key;
+    $('modeBtn').textContent = 'A+ only: ' + (ap ? 'ON' : 'OFF'); $('modeBtn').classList.toggle('on', ap); $('modeBtn').setAttribute('aria-pressed', ap);
+    $('gaugeMk').style.left = (50 + ev.score / 2) + '%';
+    let h = '';
+    if (k === 'NOTRADE') {
+      const lim = isPhone() && !S.showAllReasons ? 3 : 99, more = ev.blocks.length - lim;
+      h = `<li class="rh">Why not trade</li>` + ev.blocks.slice(0, lim).map(b => `<li class="con">${esc(b)}</li>`).join('') + (more > 0 ? `<li class="morew"><button class="more" id="moreReasons">+ ${more} more reason${more > 1 ? 's' : ''}</button></li>` : '');
+    }
+    else {
+      const pros = ev.factors.filter(f => Math.sign(f.val) === ev.dir && f.val !== 0).sort((a, b) => Math.abs(b.val) - Math.abs(a.val)).slice(0, 3);
+      h = `<li class="rh">Why ${k === 'LONG' ? 'long' : 'short'}</li>` + pros.map(f => `<li class="pro">${esc(f.reason)}</li>`).join('');
+    }
+    if (ev.cautions.length) h += `<li class="rh" style="margin-top:6px">Cautions</li>` + ev.cautions.map(c => `<li class="cau">${esc(c)}</li>`).join('');
+    $('vReasons').innerHTML = h;
+    const mb = $('moreReasons'); if (mb) mb.onclick = () => { S.showAllReasons = true; renderVerdict(S.data); };
+    const htfTxt = { bull: 'uptrend', bear: 'downtrend', mixed: 'mixed', unknown: 'n/a' };
+    $('vChips').innerHTML = [
+      `ADX <b>${x.adx[ev.i].toFixed(0)}</b>`, `CHOP <b>${fin(ev.cond.chop) ? ev.cond.chop.toFixed(0) : '—'}</b>`, `${D.htfName} trend <b>${htfTxt[ev.htfState]}</b>`,
+      ...(x.top.name && x.top.name !== D.htfName ? [`${x.top.name} trend <b>${htfTxt[ev.topState]}</b>`] : []),
+      `Setup <b>${ev.flags.setup || 'none'}</b>`, `Agreement <b>${Math.round(ev.agree * 100)}%</b>`,
+      `ATR <b>${fmtP(x.atr[ev.i])}</b> (${(x.atr[ev.i] / x.c[ev.i] * 100).toFixed(2)}%)`].map(c => `<span class="chip">${c}</span>`).join('');
+    const ai = D.evRaw.ai, dw = ev.dir === 1 ? 'long' : 'short';
+    $('vAi').innerHTML = !ai || (!ai.ready && !ai.failed) ? '<span class="aiBadge">AI</span>probability model training on history…' : !ai.ready ? `<span class="aiBadge">AI</span>model unavailable: ${esc(ai.failed)}`
+      : `<span class="aiBadge">AI</span>Probability of hitting TP1 (${k === 'NOTRADE' ? 'if ' + dw : dw}): <b>${pc(ai.p)}</b><br><span class="sk ${ai.skill.ok ? 'ok' : 'weak'}">base rate ${pc(ai.base)} · ${ai.skill.short}${ai.skill.ok ? '' : ' — little/no edge'}</span>`;
+    $('aiBtn').textContent = 'AI filter: ' + (S.ai ? 'ON' : 'OFF'); $('aiBtn').classList.toggle('on', S.ai); $('aiBtn').setAttribute('aria-pressed', S.ai);
+    setFavicon(k); renderMTF();
+  }
+  function renderPlan(D) {
+    const ev = D.ev, lev = num('inLev', 3); const p = Engine.plan(D.x, ev.i, ev.dir, lev); D.plan = p;
+    const hypo = ev.vkey === 'NOTRADE', L = p.dir === 1;
+    $('planTag').textContent = hypo ? `hypothetical ${L ? 'long' : 'short'}` : `${ev.verdict} active`;
+    $('planTag').className = 'tag ' + (hypo ? 'hypo' : ev.vkey);
+    const pe = v => { const q = (v / p.entry - 1) * 100; return `${q > 0 ? '+' : ''}${q.toFixed(2)}%`; };
+    $('planKv').innerHTML = `
+      <span class="k">Direction</span><span class="v ${L ? 'up' : 'dn'}" style="font-weight:700">${L ? '▲ LONG' : '▼ SHORT'}${hypo ? ' <span class="mut" style="font-weight:400">(if triggered)</span>' : ''}</span>
+      <span class="k">Entry zone</span><span class="v">${fmtP(p.zone[0])} – ${fmtP(p.zone[1])}</span>
+      <span class="k">Stop loss</span><span class="v dn">${fmtP(p.stop)} <span class="mut">(${pe(p.stop)})</span></span>
+      <span class="k">TP1 · 1.5R</span><span class="v up">${fmtP(p.tp1)} <span class="mut">(${pe(p.tp1)})</span></span>
+      <span class="k">TP2 · 3R</span><span class="v up">${fmtP(p.tp2)} <span class="mut">(${pe(p.tp2)})</span></span>
+      <span class="k">Risk (1R)</span><span class="v">${fmtP(p.R)} <span class="mut">(${p.riskPct.toFixed(2)}%)</span></span>
+      <span class="k">Est. liquidation @${lev}×</span><span class="v amb">${fmtP(p.liq)} <span class="mut">(${pe(p.liq)})</span></span>
+      <span class="k">AI P(TP1 before stop)</span><span class="v">${D.evRaw.ai && D.evRaw.ai.ready ? `${pc(D.evRaw.ai.p)} <span class="mut">(filter ≥ ${pc(D.evRaw.ai.thr)} ${D.evRaw.ai.p >= D.evRaw.ai.thr ? '✓' : '✗'})</span>` : '<span class="mut">training…</span>'}</span>
+      <span class="k">Stop logic</span><span class="v mut" style="font-family:var(--sans);font-size:11.5px">10-bar swing ${L ? 'low' : 'high'} ${fmtP(p.swing)} ± 0.5 ATR, min 1.5 ATR</span>`;
+    let w = '';
+    if (p.stopBeyondLiq) w += `<div class="warn">⚠ Stop sits beyond the estimated liquidation price at ${lev}× — you would be liquidated before your stop. Lower leverage.</div>`;
+    if (D.evRaw.ai && D.evRaw.ai.ready) w += `<p class="mut" style="font-size:11.5px;margin:0 12px 10px">AI calibration note: a logistic model trained on this market's own history in your browser; out-of-sample it showed ${D.evRaw.ai.skill.ok ? 'some skill' : '<span class="amb">no reliable edge</span>'} (${D.evRaw.ai.skill.short}). Predicted-vs-actual by bucket is under Backtest. A probability, not a promise.</p>`;
+    if (hypo) w += `<div class="warn soft">${NT} right now. Levels show what a ${L ? 'long' : 'short'} would look like if the conditions clear — not a recommendation to enter.</div>`;
+    $('planWarn').innerHTML = w;
+    renderSize(D);
+  }
+  function renderSize(D) {
+    const p = D.plan; if (!p) return;
+    const acct = num('inAcct', 10000), risk = num('inRisk', 1), lev = num('inLev', 3);
+    const riskUsd = acct * risk / 100, qty = riskUsd / p.R, notional = qty * p.entry, margin = notional / lev;
+    const fee = notional * Engine.CFG.feePerSide * 2;
+    $('sizeKv').innerHTML = `
+      <span class="k">Risk amount</span><span class="v">$${riskUsd.toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
+      <span class="k">Position size</span><span class="v" style="font-weight:700">${qty.toLocaleString('en-US', { maximumFractionDigits: qty < 10 ? 4 : qty < 1000 ? 2 : 0 })} ${S.sym}</span>
+      <span class="k">Notional</span><span class="v">$${notional.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+      <span class="k">Margin needed @${lev}×</span><span class="v">$${margin.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+      <span class="k">Effective leverage</span><span class="v">${(notional / acct).toFixed(2)}× account</span>
+      <span class="k">Est. fees (round trip ${(Engine.CFG.feePerSide * 200).toFixed(2)}%)</span><span class="v">$${fee.toFixed(2)}</span>`;
+    let w = '';
+    if (lev > 10) w += `<div class="warn">⚠ ${lev}× leverage: a ${(100 / lev).toFixed(1)}% move against you approaches liquidation. Pros rarely need more than 3–5×; size via the stop, not leverage.</div>`;
+    if (margin > acct) w += `<div class="warn">⚠ Margin required exceeds your account — the stop is too tight for this risk %, or raise leverage cautiously / lower risk.</div>`;
+    if (risk > 2) w += `<div class="warn soft">Risking ${risk}% per trade: 10 straight losses (it happens) = −${(100 - 100 * (1 - risk / 100) ** 10).toFixed(0)}% drawdown. 0.5–1% is standard.</div>`;
+    if (p.stopBeyondLiq) w += `<div class="warn">⚠ Stop beyond liquidation at ${lev}× — reduce leverage.</div>`;
+    $('sizeWarn').innerHTML = w;
+  }
+
+  /* ---------- tabs (rendered lazily: only the visible tab re-renders on refresh) ---------- */
+  function renderBreakdown(D) {
+    const ev = D.ev, x = D.x, i = ev.i, f = v => fin(v) ? fmtP(v) : '—', n1 = v => fin(v) ? v.toFixed(1) : '—';
+    const rows = ev.factors.map(fc => {
+      const w = Math.min(50, Math.abs(fc.val) / 20 * 50), col = fc.val > 0 ? 'var(--green)' : fc.val < 0 ? 'var(--red)' : 'var(--dim)';
+      return `<tr class="frow ${fc.val > 0 ? 'pos' : fc.val < 0 ? 'neg' : ''}"><td><div class="grp">${fc.group}</div><div style="font-weight:600">${fc.label}</div><div class="bar"><div class="z"></div><div class="f" style="background:${col};${fc.val >= 0 ? 'left:50%' : 'right:50%'};width:${w}%"></div></div></td>
+        <td class="val" style="color:${col}">${fc.val > 0 ? '▲ +' : fc.val < 0 ? '▼ ' : ''}${fc.val}<div class="mut" style="font-size:10px;font-weight:400">max ±${fc.max}</div></td><td class="why" style="color:#c3cdd9">${esc(fc.reason)}</td></tr>`;
+    }).join('');
+    const vr = x.volRatio[i], cd = ev.cond;
+    $('tab-breakdown').innerHTML = `<div class="two"><div>
+      <table class="reflow"><thead><tr><th style="width:150px">Factor</th><th style="width:70px;text-align:right">Pts</th><th>Why (plain English)</th></tr></thead><tbody>${rows}</tbody>
+      <tfoot><tr><td style="font-weight:700">Composite → verdict</td><td class="val ${ev.score >= 35 ? 'up' : ev.score <= -35 ? 'dn' : 'amb'}">${ev.score > 0 ? '+' : ''}${ev.score}</td><td class="why mut">Clamped to ±100. LONG ≥ +35, SHORT ≤ −35 — then the <b>no-trade filter</b> can still override it (sideways/chop, squeeze, low or extreme volatility, conflicting timeframes/factors, crowded funding, stale data)${S.mode === 'aplus' ? ', and <b>A+ mode</b> adds stricter requirements' : ''}. Verdict now: <b style="color:${ev.vkey === 'LONG' ? 'var(--green)' : ev.vkey === 'SHORT' ? 'var(--red)' : '#cbd5e1'}">${ev.verdict}</b>. Evaluated on the last <b>closed</b> ${S.tf} candle.</td></tr></tfoot></table>
+      </div><div>
+      <div class="grp" style="margin-bottom:6px">Market condition (chop detector)</div>
+      <div class="igrid" style="margin-bottom:12px">
+        <span>Condition</span><span class="v">${cd.label}</span>
+        <span>Choppiness Index 14 <span class="mut">(&gt;61.8 chop, &lt;38.2 trend)</span></span><span class="v">${n1(cd.chop)}</span>
+        <span>ADX 14 <span class="mut">(&lt;20 no trend)</span></span><span class="v">${n1(cd.adx)}</span>
+        <span>BB bandwidth percentile <span class="mut">(120 bars; ≤10 squeeze)</span></span><span class="v">${fin(cd.bwRank) ? cd.bwRank.toFixed(0) : '—'}</span>
+        <span>ATR% percentile <span class="mut">(200 bars; ≤10 too quiet)</span></span><span class="v">${fin(cd.atrRank) ? cd.atrRank.toFixed(0) : '—'}</span>
+        <span>Last range ÷ ATR <span class="mut">(&gt;3 shock)</span></span><span class="v">${n1(cd.rangeAtr)}</span>
+        <span>ATR ÷ 50-bar avg <span class="mut">(&gt;2 spike)</span></span><span class="v">${fin(cd.spikeMult) ? cd.spikeMult.toFixed(2) : '—'}</span>
+        <span>Price×EMA20 crosses (20 bars) / EMA20×50 (30)</span><span class="v">${x.pxCross20[i]} / ${x.emaCross30[i]}</span>
+        <span>Position in Bollinger range</span><span class="v">${fin(cd.bbPos) ? Math.round(cd.bbPos * 100) + '%' : '—'}</span>
+      </div>
+      <div class="grp" style="margin-bottom:6px">Indicator snapshot (last closed bar)</div>
+      <div class="igrid">
+        <span>Close</span><span class="v">${f(x.c[i])}</span>
+        <span class="lg-ema20">EMA 20</span><span class="v">${f(x.ema20[i])}</span><span class="lg-ema50">EMA 50</span><span class="v">${f(x.ema50[i])}</span><span class="lg-ema200">EMA 200</span><span class="v">${f(x.ema200[i])}</span>
+        <span>RSI 14</span><span class="v">${n1(x.rsi[i])}</span>
+        <span>MACD / signal / hist</span><span class="v">${n1(x.macd[i])} / ${n1(x.signal[i])} / ${n1(x.hist[i])}</span>
+        <span>Bollinger 20,2 (U / M / L)</span><span class="v">${f(x.bbUp[i])} / ${f(x.bbMid[i])} / ${f(x.bbLo[i])}</span>
+        <span>ATR 14</span><span class="v">${f(x.atr[i])} (${(x.atr[i] / x.c[i] * 100).toFixed(2)}%)</span>
+        <span>+DI / −DI</span><span class="v">${n1(x.pdi[i])} / ${n1(x.mdi[i])}</span>
+        <span>Stoch RSI K / D</span><span class="v">${n1(x.stK[i])} / ${n1(x.stD[i])}</span>
+        <span>VWAP <span class="mut">(${x.vwapLabel})</span></span><span class="v">${f(x.vwap[i])}</span>
+        <span>Volume vs 20-avg</span><span class="v">${fin(vr) ? vr.toFixed(2) + '×' : '—'}</span>
+        <span>OBV slope (20, norm.)</span><span class="v">${fin(x.obvSlopeN[i]) ? x.obvSlopeN[i].toFixed(2) : '—'}</span>
+        <span>20-bar high / low</span><span class="v">${f(x.hh20[i])} / ${f(x.ll20[i])}</span>
+        <span>${D.htfName} close vs EMA50 / 200</span><span class="v">${D.htfSnap}</span>
+        <span>Funding (8h eq.)</span><span class="v">${fin(D.fut.funding8h) ? Engine.pct(D.fut.funding8h) : '—'}</span>
+        <span>OI change 24h</span><span class="v">${fin(D.fut.oiChg24) ? (D.fut.oiChg24 >= 0 ? '+' : '') + D.fut.oiChg24.toFixed(2) + '%' : '—'}</span>
+        <span>Long/short (accounts)</span><span class="v">${fin(D.fut.lsr) ? D.fut.lsr.toFixed(2) : '—'}</span>
+      </div></div></div>`;
+  }
+  const pctS = v => fin(v) ? (v * 100).toFixed(1) + '%' : '—', sR = v => fin(v) ? (v >= 0 ? '+' : '') + v.toFixed(2) : '—';
+  const frPF = v => fin(v) ? v.toFixed(2) : v === Infinity ? '∞' : '—';
+  const dS = t => new Date(t * 1000).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+  function cmpTable(bt, part, title) {
+    const all = { ...bt, ...(bt.ml && bt.ml.ok ? bt.ml.bt : {}) }, modes = ['raw', 'normal', 'aplus', ...(bt.ml && bt.ml.ok && part !== 'full' ? ['normalAI', 'aplusAI'] : [])];
+    const rows = modes.map(m => { const r = all[m][part], nm = MODE_NAME[m] + (m.endsWith('AI') && part === 'is' ? ' (fitted here — optimistic)' : m.endsWith('AI') ? ' (out-of-sample)' : ''); flag = r.meaningful ? '' : '<span class="nflag" title="fewer than 30 trades: not statistically meaningful">⚠ n&lt;30</span>';
+      return `<tr${m === S.mode ? ' style="background:rgba(76,154,255,.07)"' : ''}><td>${m === S.mode ? '<b>' + nm + '</b>' : m.endsWith('AI') ? '<span style="color:#8fbfff">' + nm + '</span>' : '<span class="mut">' + nm + '</span>'}</td><td data-l="Trades">${r.n}${flag}</td><td data-l="Win %">${pctS(r.winRate)}</td><td data-l="TP1 hit">${pctS(r.tp1Rate)}</td><td data-l="TP2 hit">${pctS(r.tp2Rate)}</td><td data-l="Expect. R">${sR(r.expectancy)}</td><td data-l="PF">${frPF(r.profitFactor)}</td><td data-l="Max DD">${r.maxDDR.toFixed(1)}R</td></tr>`; }).join('');
+    const r0 = bt.normal[part];
+    return `<div class="grp" style="margin:4px 0">${title} <span class="mut" style="text-transform:none;letter-spacing:0">(${dS(r0.from)} → ${dS(r0.to)}, ${r0.bars} bars)</span></div>
+      <table class="cmp"><thead><tr><th>Mode</th><th>Trades</th><th>Win %</th><th>TP1 hit</th><th>TP2 hit</th><th>Expect. R</th><th>PF</th><th>Max DD</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  function renderBacktest(D) {
+    const el = $('tab-backtest');
+    if (!D.bt) { el.innerHTML = `<p class="mut">Loading up to ${DEEP_BARS.toLocaleString()} candles of history and running the backtest in the background…</p>`; return; }
+    const bt = D.bt, b = bt[S.mode].full;
+    const trades = b.trades.filter(t => !t.open).slice(-12).reverse().map(t => `<tr><td data-l="Entry" class="mono">${new Date(t.entryT * 1000).toLocaleString([], { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+      <td data-l="Side" class="${t.dir === 1 ? 'up' : 'dn'}" style="font-weight:700">${t.dir === 1 ? '▲ LONG' : '▼ SHORT'}</td><td data-l="Price" class="mono">${fmtP(t.fill)}</td><td data-l="Stop" class="mono">${fmtP(t.stop)}</td><td data-l="Exit">${t.exitReason}</td><td data-l="Result" class="mono res ${t.r >= 0 ? 'up' : 'dn'}" style="text-align:right">${t.r >= 0 ? '+' : ''}${t.r.toFixed(2)}R</td></tr>`).join('');
+    const ex = fin(b.expectancy) ? `${MODE_NAME[S.mode]}: ${pctS(b.winRate)} × ${b.avgWin.toFixed(2)}R − ${pctS(1 - b.winRate)} × ${b.avgLoss.toFixed(2)}R = <b>${sR(b.expectancy)}R</b> per trade` : 'no trades yet in this mode';
+    el.innerHTML = `
+      <div class="stats">
+        <div class="stat"><div class="l">Trades ${S.mode === 'aplus' ? '(A+)' : ''}</div><div class="n">${b.n}${b.meaningful ? '' : ' <span class="nflag">⚠ n&lt;30</span>'}</div></div>
+        <div class="stat"><div class="l">Win rate</div><div class="n">${pctS(b.winRate)}</div></div>
+        <div class="stat"><div class="l">Expectancy</div><div class="n ${b.expectancy >= 0 ? 'up' : 'dn'}">${sR(b.expectancy)}R</div></div>
+        <div class="stat"><div class="l">Profit factor</div><div class="n">${frPF(b.profitFactor)}</div></div>
+        <div class="stat"><div class="l">Max drawdown</div><div class="n dn">${b.maxDDR.toFixed(1)}R <span style="font-size:12px">(${b.maxDDPct.toFixed(1)}%)</span></div></div>
+        <div class="stat"><div class="l">TP1 / TP2 hit</div><div class="n" style="font-size:16px">${pctS(b.tp1Rate)} / ${pctS(b.tp2Rate)}</div></div>
+      </div>
+      <p class="note"><b>Win rate alone is misleading; expectancy = win% × avg win − loss% × avg loss.</b> ${ex}. A 90%+ win rate is easy to fake with tiny targets and huge stops — and one loss then wipes out many wins. Targets here stay fixed at 1.5R / 3R with an ATR stop.</p>
+      ${cmpTable(bt, 'full', 'Full history')}
+      ${cmpTable(bt, 'is', 'In-sample — first 70%')}
+      ${cmpTable(bt, 'oos', 'Out-of-sample — last 30%')}
+      ${mlSection(bt)}
+      <p class="mut" style="font-size:11.5px;margin:4px 0 12px">All thresholds were fixed before the split and never tuned on it, so the last 30% is data the rules have not been fitted to. <span class="amb">⚠ n&lt;30 = too few trades to mean much.</span> Win % counts any net-positive trade (e.g. TP1 then breakeven).</p>
+      <div class="two"><div><div class="grp" style="margin-bottom:4px">Equity curve, full history (cumulative R, net of costs) — green: ${MODE_NAME[S.mode]} · gray dashed: ${S.mode === 'normal' ? MODE_NAME.raw : MODE_NAME.normal}</div><div id="eqChart"></div></div>
+      <div style="font-size:12px;color:#b9c4d1;line-height:1.55">
+        <b style="color:#fff">How it's tested.</b> ${bt.bars.toLocaleString()} ${S.tf} candles loaded (${D.deepSrc}); the engine is replayed bar-by-bar after a 210-bar warm-up using only data available at each bar (${D.htfName}${D.x.top.name && D.x.top.name !== D.htfName ? ' and ' + D.x.top.name : ''} filters use closed bars only). Entry next bar open; stop = swing ± 0.5 ATR (min 1.5 ATR); 50% off at TP1 (1.5R), stop to breakeven, rest at TP2 (3R); 60-bar time stop; stop assumed first if both hit in one bar.<br>
+        <b style="color:#fff">Costs.</b> ${(Engine.CFG.feePerSide * 100).toFixed(2)}% fee + ${(Engine.CFG.slippagePerSide * 100).toFixed(2)}% slippage per side (${b.costPct.toFixed(2)}% round trip). Funding payments not included. DD % assumes 1% risk/trade.<br>
+        <span class="amb">⚠ Funding/OI/L-S factors have no free history, so the replay excludes them (and the crowded-funding filter). Past results don't predict future ones.</span>
+        ${b.openTrade ? `<br><b style="color:#fff">Open trade:</b> ${b.openTrade.dir === 1 ? 'LONG' : 'SHORT'} from ${fmtP(b.openTrade.fill)} (not counted).` : ''}
+      </div></div>
+      <div class="grp" style="margin:12px 0 4px">Most recent trades (${MODE_NAME[S.mode]})</div>
+      <table class="trades"><thead><tr><th>Entry time</th><th>Side</th><th>Entry</th><th>Stop</th><th>Exit</th><th style="text-align:right">Result</th></tr></thead><tbody>${trades || '<tr><td colspan="6" class="mut">No completed trades in this mode.</td></tr>'}</tbody></table>`;
+    if (eqChart) { eqChart.remove(); eqChart = null; }
+    const box = $('eqChart'), alt = bt[S.mode === 'normal' ? 'raw' : 'normal'].full;
+    if (box) {
+      eqChart = LWC.createChart(box, { autoSize: true, layout: { background: { type: 'solid', color: '#141c28' }, textColor: '#7d8a9c', fontSize: 10 }, grid: { vertLines: { visible: false }, horzLines: { color: '#1b2431' } }, rightPriceScale: { borderColor: '#1e2835' }, timeScale: { borderColor: '#1e2835' }, handleScroll: false, handleScale: false });
+      const pts = curve => { const out = [{ time: ct(b.from), value: 0 }]; let last = ct(b.from); curve.forEach(p => { const t = Math.max(ct(p.time), last + 1); last = t; out.push({ time: t, value: p.value }); }); return out; };
+      eqChart.addSeries(LWC.LineSeries, { color: '#64748b', lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false }).setData(pts(alt.curve));
+      eqChart.addSeries(LWC.BaselineSeries, { baseValue: { type: 'price', price: 0 }, topLineColor: '#1fc77e', topFillColor1: 'rgba(31,199,126,.25)', topFillColor2: 'rgba(31,199,126,.02)', bottomLineColor: '#f0506e', bottomFillColor1: 'rgba(240,80,110,.02)', bottomFillColor2: 'rgba(240,80,110,.25)', lineWidth: 2, priceFormat: { type: 'price', precision: 1, minMove: 0.1 } }).setData(pts(b.curve));
+      eqChart.timeScale().fitContent();
+    }
+  }
+  function mlSection(bt) {
+    const ml = bt.ml; if (!ml) return '';
+    if (!ml.ok) return `<div class="mlbox"><h4><span class="aiBadge">AI</span>Probability model</h4>Not trained: ${esc(ml.reason)}.</div>`;
+    const o = ml.oos, sk = mlSkill(ml), fv = filterVerdict(bt);
+    const bins = o.bins.filter(b => b.n).map(b => `<tr><td>${Math.round(b.lo * 100)}–${b.hi > 1 ? 100 : Math.round(b.hi * 100)}%</td><td>${b.n}</td><td>${pc(b.pred)}</td><td>${pc(b.actual)}</td></tr>`).join('');
+    return `<div class="mlbox"><h4><span class="aiBadge">AI</span>Probability model — honest out-of-sample check (last 30%)</h4>
+      <div class="verdictLine ${fv.good ? 'good' : 'bad'}">${fv.text}</div>
+      <div class="verdictLine ${sk.ok ? 'good' : 'bad'}" style="font-weight:600">Prediction skill: ${sk.long}</div>
+      <div class="mlgrid">
+        <div><div class="l">AUC (0.5 = coin flip)</div><div class="n">${o.auc.toFixed(3)}</div></div>
+        <div><div class="l">Brier (lower = better)</div><div class="n">${o.brier.toFixed(3)}</div><div class="l">base-rate guess ${o.brierRef.toFixed(3)}</div></div>
+        <div><div class="l">Accuracy @ 50%</div><div class="n">${pc(o.acc)}</div><div class="l">always-majority ${pc(o.accRef)}</div></div>
+        <div><div class="l">TP1-first rate (test)</div><div class="n">${pc(o.base)}</div><div class="l">model avg ${pc(o.meanP)}</div></div>
+      </div>
+      <table class="calib"><thead><tr><th>Predicted</th><th>Bars</th><th>Avg predicted</th><th>Actual TP1 rate</th></tr></thead><tbody>${bins}</tbody></table>
+      <p class="mut" style="font-size:11.5px;margin:6px 0 0">Logistic regression (L2) on ${ML.NAMES.length} engine features signed by trade direction (trend alignment, ADX, CHOP, RSI, MACD hist, %B, bandwidth, ATR%, volume, OBV, EMA distances, score, agreement…). Label: would a trade on that closed bar, in the score's direction, with the engine's stop, reach TP1 (1.5R) before the stop. Trained on ${ml.nTrain} bars of the first 70% (labels resolved inside it), tested on ${ml.nTest} bars of the last 30%. L2 strength λ=${ml.params.lambda} and the filter threshold ${pc(ml.thr)} were picked by walk-forward inside the first 70% only (out-of-fold avg R above the threshold ${sR(ml.thrAvgR)} vs ${sR(ml.thrAllAvgR)} for every bar${ml.thrAvgR > ml.thrAllAvgR ? '' : ' — no threshold helped even on training data'}). Funding/OI excluded (no free history). The live probability uses the same recipe refit on all resolved bars. Largest weights: ${ml.top.slice(0, 4).map(t => `${t.name} ${t.w > 0 ? '+' : ''}${t.w.toFixed(2)}`).join(', ')}. TP2 (3R) was reached on ${pc(ml.oosTp2)} of test bars.</p></div>`;
+  }
+  const TAB_RENDER = { breakdown: renderBreakdown, notes: D => renderNotes(D), backtest: renderBacktest, futures: D => renderFutures(D), ai: D => renderAi(D), playbook: () => { } };
+  function renderActiveTab(force) {
+    const D = S.data; if (!D) return;
+    const key = S.tab, stamp = S.ver + ':' + S.mode + ':' + S.ai + (key === 'backtest' ? (D.bt ? ':bt' : ':nobt') : '');
+    if (!force && S.rendered[key] === stamp) return;
+    TAB_RENDER[key](D); S.rendered[key] = stamp;
+  }
+  function renderFutures(D) {
+    const F = D.fut, fh = F.fundHist || [];
+    const mx = Math.max(...fh.map(x => Math.abs(x.r)), 1e-6);
+    const bars = fh.map(x => `<span class="fb" title="${new Date(x.t * 1000).toLocaleString()} : ${(x.r * 100).toFixed(4)}%"><i style="height:${Math.max(1.5, Math.abs(x.r) / mx * 33)}px;background:${x.r >= 0 ? 'var(--green)' : 'var(--red)'};${x.r >= 0 ? 'bottom' : 'top'}:50%"></i></span>`).join('');
+    const usd = v => fin(v) ? '$' + (v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v.toLocaleString('en-US', { maximumFractionDigits: 0 })) : '—';
+    const ann = fin(F.funding) ? F.funding * (24 / F.fundIntervalH) * 365 * 100 : NaN;
+    const avg7 = fh.length ? fh.slice(-Math.round(7 * 24 / F.fundIntervalH)).reduce((a, x) => a + x.r, 0) / Math.min(fh.length, Math.round(7 * 24 / F.fundIntervalH)) : NaN;
+    const oiS = F.oiSeries || [], omx = Math.max(...oiS.map(o => o.v)), omn = Math.min(...oiS.map(o => o.v));
+    const oiBars = oiS.map(o => `<span title="${new Date(o.t * 1000).toLocaleString()} : ${usd(o.v)}" style="height:${6 + (o.v - omn) / ((omx - omn) || 1) * 60}px;background:var(--blue);opacity:.7;align-self:flex-end"></span>`).join('');
+    const stat = (l, v, cls = '') => `<div class="stat"><div class="l">${l}</div><div class="n ${cls}" style="font-size:16px">${v}</div></div>`;
+    $('tab-futures').innerHTML = `<div class="fgrid">
+      ${stat('Funding (current, ' + F.fundIntervalH + 'h)', fin(F.funding) ? (F.funding * 100).toFixed(4) + '%' : '—', F.funding > 0 ? 'up' : F.funding < 0 ? 'dn' : '')}
+      ${stat('Funding annualized', fin(ann) ? ann.toFixed(1) + '%' : '—')}
+      ${stat('Next funding', F.nextFunding ? new Date(F.nextFunding * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' <span class="mut" style="font-size:11px">local</span>' : '—')}
+      ${stat('7d avg funding', fin(avg7) ? (avg7 * 100).toFixed(4) + '%' : '—')}
+      ${stat('Open interest (' + (F.sources.oi || '—') + ')', usd(F.oiUsd))}
+      ${stat('OI change 24h (Gate.io)', fin(F.oiChg24) ? (F.oiChg24 >= 0 ? '+' : '') + F.oiChg24.toFixed(2) + '%' : '—', F.oiChg24 >= 0 ? 'up' : 'dn')}
+      ${stat('Long/short ratio (accounts)', fin(F.lsr) ? F.lsr.toFixed(2) : '—')}
+      ${stat('Top traders L/S (size)', fin(F.topLsr) ? F.topLsr.toFixed(2) : '—')}
+      ${stat('Long liquidations 24h', usd(F.liqLong24), 'dn')}${stat('Short liquidations 24h', usd(F.liqShort24), 'up')}
+      ${stat('Price change 24h', fin(F.priceChg24) ? (F.priceChg24 >= 0 ? '+' : '') + F.priceChg24.toFixed(2) + '%' : '—', F.priceChg24 >= 0 ? 'up' : 'dn')}
+      ${stat('Funding (8h equivalent)', fin(F.funding8h) ? (F.funding8h * 100).toFixed(4) + '%' : '—')}
+      </div>
+      <div class="two" style="margin-top:12px"><div><div class="grp">Funding history (last ${fh.length} settlements, ${F.sources.fundHist || '—'}) — green: longs pay shorts</div><div class="fbars"><div class="zl"></div>${bars}</div></div>
+      <div><div class="grp">Open interest, last 48h (Gate.io, USD)</div><div class="fbars" style="align-items:flex-end">${oiBars}</div></div></div>
+      <p class="mut" style="font-size:11.5px;margin:8px 0 0">How to read it: persistent funding above ~0.03%/8h with rising OI = crowded longs (squeeze-down risk). Negative funding with rising OI while price holds = shorts crowding in (squeeze-up fuel). OI rising with price confirms a trend; OI falling while price moves = short covering / long liquidation (less durable). L/S and OI-change are from Gate.io (a free CORS-enabled source); treat them as a proxy for market-wide positioning.
+      Sources — ticker: ${F.sources.ticker || 'n/a'}, funding: ${F.sources.funding || 'n/a'}, OI: ${F.sources.oi || 'n/a'}, positioning: ${F.sources.positioning || 'n/a'}.</p>`;
+  }
+  function renderNotes(D) {
+    const ev = D.ev, x = D.x, i = ev.i, p = D.plan, F = D.fut, tf = S.tf, H = D.htfName, sym = S.sym;
+    const adx = x.adx[i], r = x.rsi[i], L = ev.dir === 1, atrPct = x.atr[i] / x.c[i] * 100;
+    const P = [];
+    const htf = { bull: `The <b>${H}</b> chart is in an uptrend (price above the 200 EMA with the 50 above the 200), so the path of least resistance is up and longs get the benefit of the doubt.`, bear: `The <b>${H}</b> chart is in a downtrend (price below the 200 EMA with the 50 under the 200), so rallies are suspect and shorts get the benefit of the doubt.`, mixed: `The <b>${H}</b> picture is mixed — price and the 50/200 EMAs disagree — which usually means chop or a trend change in progress, so conviction and size should be lower.`, unknown: `There isn't enough ${H} history for a clean higher-timeframe read, so I lean more on the ${tf} structure.` }[ev.htfState];
+    const reg = ev.regime === 'trending' ? `On the ${tf}, ADX ${adx.toFixed(0)} says we're trending — in trends I buy pullbacks (or sell rallies) into the 20/50 EMA rather than fading moves or chasing extended candles.` : ev.regime === 'ranging' ? `On the ${tf}, ADX ${adx.toFixed(0)} = range. Trend signals get chopped up here; the play is fading the Bollinger extremes (${fmtP(x.bbLo[i])} / ${fmtP(x.bbUp[i])}) with RSI confirmation, and not trusting breakouts until volume proves them.` : `On the ${tf}, ADX ${adx.toFixed(0)} is in no-man's land (20–25): not trending enough for pullback entries, not quiet enough for clean range fades. That's where most over-trading losses come from.`;
+    P.push(`<b>Context.</b> ${htf} ${reg}`);
+    const pos = ev.factors.filter(f => Math.sign(f.val) === ev.dir && f.val !== 0).sort((a, b) => Math.abs(b.val) - Math.abs(a.val)).slice(0, 3);
+    const con = ev.factors.filter(f => Math.sign(f.val) === -ev.dir && f.val !== 0).sort((a, b) => Math.abs(b.val) - Math.abs(a.val)).slice(0, 2);
+    const lc = s => s.charAt(0).toLowerCase() + s.slice(1);
+    if (ev.vkey !== 'NOTRADE') {
+      P.push(`<b>The trade.</b> ${ev.verdict} ${sym} — ${ev.flags.setup ? `<b>${ev.flags.setup.toLowerCase()}</b>` : 'momentum and structure aligned'}, score ${ev.score > 0 ? '+' : ''}${ev.score} (${ev.confidence.toLowerCase()} confidence). What I like: ${pos.map(f => lc(f.reason)).join('; ')}.${con.length ? ` What bothers me: ${con.map(f => lc(f.reason)).join('; ')}.` : ''} Entry in the ${fmtP(p.zone[0])}–${fmtP(p.zone[1])} zone; don't chase if it runs more than half an ATR past it.`);
+      P.push(`<b>Invalidation.</b> A ${tf} close ${L ? 'below' : 'above'} <b>${fmtP(p.stop)}</b> (10-bar swing ${L ? 'low' : 'high'} plus a volatility buffer) means the idea is wrong — take the loss, never widen the stop. Take half at TP1 <b>${fmtP(p.tp1)}</b> and move the stop to breakeven; let the rest work toward TP2 <b>${fmtP(p.tp2)}</b>.${p.stopBeyondLiq ? ' <span class="dn">At this leverage the liquidation price is inside your stop — cut leverage.</span>' : ''}`);
+    } else {
+      P.push(`<b>Don't trade.</b> ${ev.blocks.map(b => esc(b)).join('. ')}. The tape leans ${L ? 'long' : 'short'}${pos.length ? ` (${pos.slice(0, 2).map(f => lc(f.reason)).join('; ')})` : ''}${con.length ? `, but ${con.map(f => lc(f.reason)).join('; ')}` : ''}. Standing aside is a position; forcing trades in ${ev.cond.key === 'sideways' ? 'sideways chop' : ev.cond.key === 'squeeze' ? 'a squeeze' : 'unclear conditions'} is how accounts bleed.${ev.cond.key === 'squeeze' ? ' A squeeze is a coiled spring: the edge comes after the breakout candle closes, not before.' : ''}`);
+      P.push(`<b>What would change my mind.</b> Bullish: a ${tf} close above the 20-bar high <b>${fmtP(x.hh20[i])}</b> on 1.5×+ volume, or a pullback into the 20 EMA (~${fmtP(x.ema20[i])}) with RSI holding above 40 and MACD turning up. Bearish: a close below the 20-bar low <b>${fmtP(x.ll20[i])}</b> on volume, or a rejection at the 20 EMA with RSI capped under 60.${ev.htfState === 'bull' ? ' With the higher timeframe up, I\'d favor the long trigger.' : ev.htfState === 'bear' ? ' With the higher timeframe down, I\'d favor the short trigger.' : ''}`);
+    }
+    const fparts = [];
+    if (fin(F.funding8h)) fparts.push(F.funding8h >= 0.0003 ? `funding is hot at ${Engine.pct(F.funding8h)}/8h — longs are paying up and a flush can come fast` : F.funding8h <= -0.0002 ? `funding is negative (${Engine.pct(F.funding8h)}/8h) — shorts are paying, which is squeeze fuel if price holds` : `funding is neutral (${Engine.pct(F.funding8h)}/8h), so no crowding tailwind or headwind`);
+    if (fin(F.oiChg24) && fin(F.priceChg24)) fparts.push(`open interest is ${F.oiChg24 >= 0 ? 'up' : 'down'} ${Math.abs(F.oiChg24).toFixed(1)}% in 24h with price ${F.priceChg24 >= 0 ? 'up' : 'down'} ${Math.abs(F.priceChg24).toFixed(1)}%${F.oiChg24 > 1.5 && F.priceChg24 > 0.5 ? ' (fresh longs — trend-confirming, but watch for leverage build-up)' : F.oiChg24 > 1.5 && F.priceChg24 < -0.5 ? ' (fresh shorts pressing)' : F.oiChg24 < -1.5 ? ' (positions closing — moves on falling OI are less durable)' : ''}`);
+    if (fin(F.lsr)) fparts.push(`the account long/short ratio is ${F.lsr.toFixed(2)}${F.lsr > 1.8 ? ' — the crowd is heavily long, which is contrarian-bearish' : F.lsr < 0.8 ? ' — the crowd is short, which is contrarian-bullish' : ''}`);
+    if (fparts.length) P.push(`<b>Positioning.</b> ${fparts.join('; ').replace(/^./, c => c.toUpperCase())}.`);
+    const nf = F.nextFunding ? Math.max(0, F.nextFunding - Date.now() / 1000) : null;
+    P.push(`<b>What to watch.</b> RSI ${r.toFixed(0)}${r >= 70 ? ' (overbought — late for new longs)' : r <= 30 ? ' (oversold — late for new shorts)' : ''}, MACD histogram ${x.hist[i] >= x.hist[i - 1] ? 'rising' : 'falling'}, ATR ${atrPct.toFixed(2)}% of price per ${tf} bar (size so a 1.5-ATR stop is 1% of equity)${nf != null ? `, next funding in ${Math.floor(nf / 3600)}h ${Math.floor(nf % 3600 / 60)}m` : ''}. Check the calendar (CPI, FOMC, NFP, big unlocks) and don't carry high leverage through them.`);
+    $('tab-notes').innerHTML = P.map(t => `<p>${t}</p>`).join('') + `<p class="mut" style="font-size:11.5px">Template text generated from the rule engine's current readings (not an LLM — for an AI write-up use the AI analyst tab). Educational, not advice.</p>`;
+  }
+  function renderPlaybook() {
+    const sec = (h, items) => `<div><h4>${h}</h4><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+    $('tab-playbook').innerHTML = `<div class="play">
+      ${sec('Risk first', ['Risk 0.5–1% of equity per trade. Position size comes from the stop distance, not from conviction.', 'Decide the stop <i>before</i> entry; never widen it. A stop is the cost of being wrong.', 'Daily loss limit (e.g. −3R): hit it, close the screen.', 'Aim for ≥ 1.5R on TP1; a 40% win rate is profitable at 2R+ average winners.'])}
+      ${sec('Leverage & liquidation', ['Leverage is a margin setting, not a risk setting. 2–5× is plenty for BTC/ETH; alts move 2–3× more.', 'Your liquidation price must be well beyond your stop. If it isn\'t, lower leverage.', 'Prefer isolated margin per trade so one mistake can\'t drain the account.', 'Above 10×, normal volatility (a 1–2 ATR wick) can liquidate you.'])}
+      ${sec('Trend & regime', ['Trade with the higher timeframe. Counter-trend only on clear reversal evidence (divergence at a key level).', 'ADX > 25: buy pullbacks to the 20/50 EMA, don\'t short strength. ADX < 20: fade band extremes, distrust breakouts.', 'Breakouts need volume (≥ 1.5× average). Low-volume breakouts fail often.', 'Don\'t chase: > 2.5 ATR from the 20 EMA is extended — wait for the retest.'])}
+      ${sec('Funding & open interest', ['Funding > 0.03%/8h for days = crowded longs; sharp long squeezes follow. Negative funding in an uptrend = fuel for a squeeze higher.', 'Rising OI + rising price = new money confirming. Rising price + falling OI = short covering, often fades.', 'Holding through funding costs money: 0.01%/8h ≈ 11% a year on notional.', 'Liquidation clusters act as magnets — expect wicks through obvious levels.'])}
+      ${sec('Timing & news', ['Avoid opening new leveraged positions minutes before CPI, FOMC, NFP or major exchange/ETF news.', 'Weekend and Asia-overnight liquidity is thin: wider stops or smaller size.', 'Signals are evaluated on closed candles — don\'t act on a candle that hasn\'t closed.', 'If you missed the entry, you missed it. Another setup always comes.'])}
+      ${sec('Win rate vs expectancy', ['<b>Win rate alone is misleading; expectancy = win% × avg win − loss% × avg loss.</b>', 'A 40% win rate at +2R average winners beats a 90% win rate that risks 10R to make 1R.', 'Anyone selling a "95% win rate" is usually hiding tiny targets, huge stops, or a cherry-picked sample.', 'Judge a system on 30+ out-of-sample trades: expectancy, profit factor and max drawdown together.'])}
+      ${sec('Using the AI features', ['The <b>AI probability</b> is a small logistic-regression model trained in your browser on this market\'s own history: it estimates how often a trade like this reached TP1 before the stop. Check its out-of-sample AUC in Backtest — near 0.5 means no skill.', 'The <b>AI filter</b> can only remove signals, never add them. If it didn\'t improve the last-30% results, leave it off.', 'The <b>AI analyst</b> (your own API key) explains the dashboard\'s numbers in plain English. It has no extra market data, can be confidently wrong, and must never talk you out of your stop.', '<b>Win rate alone is misleading; expectancy = win% × avg win − loss% × avg loss.</b>'])}
+      ${sec('Psychology', ['No revenge trading after a loss; no size-up after a win streak.', 'Journal every trade: setup, reason, R result, mistake. Review weekly.', 'Stand aside when signals conflict — flat is a position.', 'A backtest is a hypothesis, not a promise. Paper-trade new rules before risking money.'])}
+    </div>`;
+  }
+
+  /* ---------- AI analyst (optional, bring your own key). Requests go straight from this browser to the chosen provider. ---------- */
+  const PROVIDERS = {
+    xai: { name: 'xAI (Grok)', url: 'https://api.x.ai/v1/chat/completions', models: ['grok-4.3', 'grok-4.6', 'grok-4.5', 'grok-4.20-0309-non-reasoning'], keyHint: 'xai-…' },
+    openai: { name: 'OpenAI', url: 'https://api.openai.com/v1/chat/completions', models: ['gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-6-astra'], keyHint: 'sk-…' },
+    anthropic: { name: 'Anthropic (Claude)', url: 'https://api.anthropic.com/v1/messages', models: ['claude-sonnet-5', 'claude-opus-5', 'claude-haiku-4-5'], keyHint: 'sk-ant-…' },
+  };
+  const AI_SYS = `You are a disciplined, risk-first professional crypto futures trader and trading coach. You are given a JSON snapshot from a rule-based signal dashboard (indicators, factor scores, market condition, don't-trade reasons, trade plan, funding/open interest, multi-timeframe verdicts, an ML probability estimate and backtest stats).
+Rules:
+- Use only the snapshot plus general trading knowledge. Do not invent prices, news, order-book data or events that are not in the snapshot.
+- Explain the setup in plain English: higher-timeframe trend, regime (trending/sideways/squeeze/volatile), momentum, volume and positioning.
+- Always state what would invalidate the idea, using the specific levels in the snapshot (stop, 20-bar high/low, EMAs).
+- If the verdict is DON'T TRADE or the evidence is mixed, say so clearly and describe exactly what to wait for. Waiting is a valid position. Never talk the user into a trade the dashboard rejects.
+- Never promise or imply guaranteed outcomes, and never quote a win rate as a promise. Treat the AI probability as a rough estimate and mention its out-of-sample skill (AUC near 0.5 = no skill). Small backtest samples (< 30 trades) are not meaningful.
+- Always cover risk: size from the stop distance (0.5–1% of equity), leverage versus the liquidation price, funding costs, and event/weekend risk.
+- Be concise (about 250 words unless asked for more), with short headings or bullets.
+- End with one line: "Educational only, not financial advice."`;
+  const EXPLAIN_Q = 'Explain this setup like a disciplined, risk-first futures trader: (1) what the dashboard is saying and why, (2) the bull case and the bear case from this data, (3) what would invalidate it (specific levels), (4) trade now or wait, and exactly what to wait for, (5) risk management for this exact plan (size, leverage vs liquidation, funding).';
+  function aiCfg() {
+    let prov = localStorage.getItem('fst_ai_prov') || 'xai'; if (!PROVIDERS[prov]) prov = 'xai';
+    return { prov, model: localStorage.getItem('fst_ai_model_' + prov) || PROVIDERS[prov].models[0], key: localStorage.getItem('fst_ai_key_' + prov) || '' };
+  }
+  const r2 = (v, d = 2) => fin(v) ? +v.toFixed(d) : null, rp = v => fin(v) ? +v.toPrecision(7) : null;
+  const pickBt = r => ({ trades: r.n, winRatePct: r2(r.winRate * 100, 1), expectancyR: r2(r.expectancy), profitFactor: fin(r.profitFactor) ? r2(r.profitFactor) : null, maxDrawdownR: r2(r.maxDDR, 1), meaningful: r.meaningful });
+  function snapshot(D) {
+    const ev = D.ev, x = D.x, i = ev.i, p = D.plan, F = D.fut, ai = D.evRaw.ai, ml = D.bt && D.bt.ml, mt = S.mtf[S.sym] || {};
+    return {
+      symbol: S.sym + '-USDT perpetual', timeframe: S.tf, higherTimeframe: D.htfName, lastPrice: rp(F.last || x.c[x.n - 1]), evaluatedClosedBarOpen: new Date(x.t[i] * 1000).toISOString(), dataSource: D.src,
+      mode: S.mode === 'aplus' ? 'A+ setups only' : 'normal', aiFilterOn: S.ai,
+      verdict: ev.verdict, normalModeVerdict: D.evRaw.verdict, aPlusVerdict: D.evRaw.aplus.verdict, score: ev.score, scoreRule: 'composite -100..+100; LONG >= +35, SHORT <= -35, then the no-trade filter can override', leaningDirection: ev.dir === 1 ? 'long' : 'short', confidence: ev.confidence, factorAgreementPct: Math.round(ev.agree * 100),
+      marketCondition: { label: ev.cond.label, adx14: r2(ev.cond.adx, 1), choppinessIndex14: r2(ev.cond.chop, 1), bbBandwidthPercentile: r2(ev.cond.bwRank, 0), atrPercentile: r2(ev.cond.atrRank, 0), positionInBollingerRangePct: fin(ev.cond.bbPos) ? Math.round(ev.cond.bbPos * 100) : null },
+      dontTradeReasons: ev.vkey === 'NOTRADE' ? ev.blocks : [], aPlusFailures: D.evRaw.aplus.fails, cautions: ev.cautions,
+      setup: ev.flags.setup, regime: ev.regime, higherTimeframeTrend: ev.htfState, dailyTrend: x.top.name ? ev.topState : null,
+      factors: ev.factors.map(f => ({ group: f.group, factor: f.label, points: f.val, max: f.max, reason: f.reason })),
+      indicators: { close: rp(x.c[i]), ema20: rp(x.ema20[i]), ema50: rp(x.ema50[i]), ema200: rp(x.ema200[i]), rsi14: r2(x.rsi[i], 1), macd: rp(x.macd[i]), macdSignal: rp(x.signal[i]), macdHist: rp(x.hist[i]), bbUpper: rp(x.bbUp[i]), bbMid: rp(x.bbMid[i]), bbLower: rp(x.bbLo[i]), atr14: rp(x.atr[i]), atrPctOfPrice: r2(x.atrPct[i]), plusDI: r2(x.pdi[i], 1), minusDI: r2(x.mdi[i], 1), stochRsiK: r2(x.stK[i], 1), stochRsiD: r2(x.stD[i], 1), vwap: rp(x.vwap[i]), volumeVs20Avg: r2(x.volRatio[i]), obvSlopeNormalized: r2(x.obvSlopeN[i]), high20: rp(x.hh20[i]), low20: rp(x.ll20[i]) },
+      futures: { fundingRateCurrent: F.funding, fundingIntervalHours: F.fundIntervalH, funding8hEquivalent: F.funding8h, openInterestUsd: r2(F.oiUsd, 0), openInterestChange24hPct: r2(F.oiChg24), priceChange24hPct: r2(F.priceChg24), longShortAccountRatio: r2(F.lsr) },
+      tradePlan: p && { direction: p.dir === 1 ? 'LONG' : 'SHORT', status: ev.vkey === 'NOTRADE' ? "hypothetical only - verdict is DON'T TRADE" : 'active signal', entryZone: [rp(p.zone[0]), rp(p.zone[1])], stopLoss: rp(p.stop), tp1_1_5R: rp(p.tp1), tp2_3R: rp(p.tp2), stopDistancePct: r2(p.riskPct), leverage: num('inLev', 3), estLiquidationPrice: rp(p.liq), stopBeyondLiquidation: p.stopBeyondLiq },
+      positionSizing: { accountUsdt: num('inAcct', 10000), riskPerTradePct: num('inRisk', 1) },
+      aiProbability: ai && ai.ready ? { pReachTp1BeforeStop: r2(ai.p, 3), forDirection: ai.dir === 1 ? 'LONG' : 'SHORT', trainingBaseRate: r2(ai.base, 3), aiFilterThreshold: ai.thr, outOfSampleAUC: r2(ml.oos.auc, 3), outOfSampleBrier: r2(ml.oos.brier, 3), baseRateBrier: r2(ml.oos.brierRef, 3), skill: ai.skill.short, aiFilterOutOfSample: filterVerdict(D.bt).text } : 'not available yet',
+      multiTimeframe: Object.fromEntries(MAIN_TFS.map(tf => { const r = tf === S.tf ? D.evRaw : mt[tf], v = r && modeView(r); return [tf, v ? { verdict: v.verdict, score: v.score, condition: v.cond.label } : 'loading']; })),
+      backtest: D.bt ? { candles: D.bt.bars, normal_outOfSampleLast30pct: pickBt(D.bt.normal.oos), aPlus_outOfSampleLast30pct: pickBt(D.bt.aplus.oos), normal_fullHistory: pickBt(D.bt.normal.full) } : 'still running',
+    };
+  }
+  function md(t) { // tiny, safe markdown: escape first, then bold / code / bullets / headings
+    const inline = z => z.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
+    let out = '', list = false;
+    for (const ln of esc(t).split('\n')) {
+      const m = ln.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/);
+      if (m) { if (!list) { out += '<ul>'; list = true; } out += `<li>${inline(m[1])}</li>`; continue; }
+      if (list) { out += '</ul>'; list = false; }
+      const h = ln.match(/^\s*#{1,6}\s+(.*)/);
+      if (h) out += `<p><b>${inline(h[1])}</b></p>`; else if (ln.trim()) out += `<p>${inline(ln)}</p>`;
+    }
+    return out + (list ? '</ul>' : '');
+  }
+  async function callLLM(cfg, D) {
+    const P = PROVIDERS[cfg.prov], sys = AI_SYS + '\n\nCURRENT DASHBOARD SNAPSHOT (JSON):\n' + JSON.stringify(snapshot(D));
+    const hist = S.chat.filter(m => m.role === 'user' || m.role === 'assistant').slice(-8).map(m => ({ role: m.role, content: m.content }));
+    while (hist.length && hist[0].role !== 'user') hist.shift();
+    const headers = { 'Content-Type': 'application/json' }; let body;
+    if (cfg.prov === 'anthropic') { headers['x-api-key'] = cfg.key; headers['anthropic-version'] = '2023-06-01'; headers['anthropic-dangerous-direct-browser-access'] = 'true'; body = { model: cfg.model, max_tokens: 1200, system: sys, messages: hist }; }
+    else { headers.Authorization = 'Bearer ' + cfg.key; body = { model: cfg.model, messages: [{ role: 'system', content: sys }, ...hist] }; if (cfg.prov === 'openai') body.max_completion_tokens = 2000; else { body.max_tokens = 1200; body.temperature = 0.3; } }
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 90000); let res;
+    try { res = await fetch(P.url, { method: 'POST', headers, body: JSON.stringify(body), signal: ctl.signal }); }
+    catch (e) {
+      clearTimeout(to); if (e.name === 'AbortError') throw new Error(`${P.name} did not answer within 90 s — try again or pick a faster model.`);
+      throw new Error(`Couldn't reach ${P.name} (${e.message}). Check your connection.${cfg.prov === 'openai' ? ' Note: OpenAI sends error replies (such as an invalid key) without CORS headers, so the browser reports a wrong or revoked OpenAI key as this network error — double-check the key.' : ''}`);
+    }
+    clearTimeout(to);
+    let j = null, txt = ''; try { txt = await res.text(); j = JSON.parse(txt); } catch (e) { }
+    if (!res.ok) {
+      const msg = String((j && ((j.error && j.error.message) || (typeof j.error === 'string' ? j.error : '') || j.message)) || txt.slice(0, 200) || res.statusText);
+      const hint = res.status === 401 || res.status === 403 || /api key|x-api-key|authentication|unauthorized/i.test(msg) ? 'your API key was rejected. Check it, or tap "Forget key" and paste it again.'
+        : res.status === 429 ? 'rate limit or quota reached on your account — wait a bit or check billing.' : res.status === 404 || /model/i.test(msg) ? 'the model name may be wrong or not enabled for your key — pick another model.' : '';
+      throw new Error(`${P.name} error ${res.status}: ${msg}${hint ? ' → ' + hint : ''}`);
+    }
+    const out = cfg.prov === 'anthropic' ? ((j && j.content) || []).filter(b => b.type === 'text').map(b => b.text).join('\n') : j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+    if (!out) throw new Error(`${P.name} returned an empty answer${j && j.choices && j.choices[0] && j.choices[0].finish_reason ? ' (finish reason: ' + j.choices[0].finish_reason + ')' : ''}.`);
+    return out;
+  }
+  async function aiSend(q, label) {
+    const D = S.data; if (!D || S.aiBusy || !q) return;
+    const cfg = aiCfg(); S.chat.push({ role: 'user', content: q, label });
+    if (!cfg.key) { S.chat.push({ role: 'error', content: `No API key saved for ${PROVIDERS[cfg.prov].name}. Paste your key in the settings and tap "Save key" — it stays in this browser only. (Everything else in the app works without a key.)` }); renderChat(); return; }
+    S.aiBusy = true; renderChat();
+    try { const text = await callLLM(cfg, D); S.chat.push({ role: 'assistant', content: text, meta: `${PROVIDERS[cfg.prov].name} · ${cfg.model} · ${S.sym} ${S.tf} · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` }); }
+    catch (e) { S.chat.push({ role: 'error', content: e.message }); }
+    finally { S.aiBusy = false; renderChat(); }
+  }
+  function renderChat() {
+    const log = $('aiLog'); if (!log) return;
+    log.innerHTML = (S.chat.length ? '' : `<div class="msg sys">Tap <b>Explain this setup</b> for a risk-first read of the current ${S.sym} ${S.tf} chart, or ask anything below. The AI only sees the dashboard snapshot (see "Data sent"), not news or order books.</div>`) +
+      S.chat.map(m => m.role === 'user' ? `<div class="msg user">${esc(m.label || m.content)}</div>` : m.role === 'assistant' ? `<div class="msg assistant">${md(m.content)}<div class="meta">${esc(m.meta || '')} · AI-generated, can be wrong · not financial advice</div></div>` : `<div class="msg err">⚠ ${esc(m.content)}</div>`).join('') +
+      (S.aiBusy ? '<div class="msg sys" id="aiThinking">Thinking…</div>' : '');
+    log.scrollTop = log.scrollHeight;
+    ['aiSend', 'aiExplain'].forEach(id => { if ($(id)) $(id).disabled = !!S.aiBusy; }); document.querySelectorAll('#tab-ai [data-q]').forEach(b => b.disabled = !!S.aiBusy);
+  }
+  function syncAiSettings(note) {
+    const c = aiCfg(), P = PROVIDERS[c.prov];
+    $('aiProv').value = c.prov; $('aiModel').value = c.model; $('aiModels').innerHTML = P.models.map(m => `<option value="${m}">`).join('');
+    $('aiKey').placeholder = c.key ? 'saved — paste a new key to replace' : P.keyHint;
+    $('aiKeyState').className = 'aiKeyState ' + (c.key ? 'on' : 'off');
+    $('aiKeyState').textContent = note || (c.key ? `✓ Key saved on this device for ${P.name} (ends …${c.key.slice(-4)})` : `No key saved for ${P.name}. Optional — everything else works without it.`);
+  }
+  function renderAi(D) {
+    const el = $('tab-ai');
+    if (!$('aiLog')) {
+      el.innerHTML = `<div class="aiPanel"><div>
+        <div class="aiLog" id="aiLog" aria-live="polite"></div>
+        <div class="aiBtns" style="margin-bottom:8px"><button class="aiB pri" id="aiExplain">Explain this setup</button><button class="aiB" data-q="What exactly would invalidate this setup, and which price levels matter most?">What invalidates it?</button><button class="aiB" data-q="Should I wait instead of trading? What specific conditions am I waiting for?">Should I wait?</button><button class="aiB" id="aiClear">Clear</button></div>
+        <div class="aiIn"><textarea id="aiQ" rows="2" placeholder="Ask about this chart…" enterkeyhint="send"></textarea><button class="aiB pri" id="aiSend">Send</button></div>
+        <details style="margin-top:10px"><summary class="mut" style="cursor:pointer;font-size:12px;min-height:32px">Data sent with each question (JSON snapshot)</summary><pre id="aiSnap"></pre></details>
+      </div><div class="aiSet">
+        <div style="font-weight:700;color:#fff;font-size:13px">AI analyst settings <span class="mut" style="font-weight:400">· optional, bring your own key</span></div>
+        <label>Provider<select id="aiProv">${Object.entries(PROVIDERS).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('')}</select></label>
+        <label>Model<input id="aiModel" list="aiModels" autocomplete="off" autocapitalize="off" spellcheck="false"><datalist id="aiModels"></datalist></label>
+        <label>API key<input id="aiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <div class="aiBtns"><button class="aiB pri" id="aiSave">Save key</button><button class="aiB" id="aiForget">Forget key</button></div>
+        <div class="aiKeyState" id="aiKeyState"></div>
+        <p class="note" style="margin:0">🔒 Your key is stored <b>only in this browser's localStorage on this device</b> and is sent directly from your browser to the provider you pick — no server in between. Anyone with access to this browser profile could read it: use a key with a spending limit, and tap <b>Forget key</b> on shared devices. Questions use your own API credit.</p>
+        <p class="mut" style="font-size:11.5px;margin:0">Browser access (checked Sep 2026): xAI and Anthropic allow direct browser calls (Anthropic via its direct-browser-access header, sent automatically). OpenAI's preflight allows browser calls, but an invalid sk-… key is rejected without CORS headers, so it shows up as a network error; a successful OpenAI call from a browser was not verified (no key).</p>
+      </div></div>`;
+      $('aiProv').onchange = () => { localStorage.setItem('fst_ai_prov', $('aiProv').value); syncAiSettings(); };
+      $('aiModel').onchange = () => { const v = $('aiModel').value.trim(), c = aiCfg(); if (v) localStorage.setItem('fst_ai_model_' + c.prov, v); else localStorage.removeItem('fst_ai_model_' + c.prov); syncAiSettings(); };
+      $('aiSave').onclick = () => { const k = $('aiKey').value.trim(), c = aiCfg(); if (!k) return syncAiSettings('Paste a key first.'); localStorage.setItem('fst_ai_key_' + c.prov, k); $('aiKey').value = ''; syncAiSettings(); };
+      $('aiForget').onclick = () => { const c = aiCfg(); localStorage.removeItem('fst_ai_key_' + c.prov); $('aiKey').value = ''; syncAiSettings(`Key for ${PROVIDERS[c.prov].name} removed from this device.`); };
+      $('aiExplain').onclick = () => aiSend(EXPLAIN_Q, 'Explain this setup');
+      el.querySelectorAll('[data-q]').forEach(b => b.onclick = () => aiSend(b.dataset.q));
+      $('aiSend').onclick = () => { const q = $('aiQ').value.trim(); if (q) { $('aiQ').value = ''; aiSend(q); } };
+      $('aiQ').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !isPhone()) { e.preventDefault(); $('aiSend').click(); } });
+      $('aiClear').onclick = () => { S.chat = []; renderChat(); };
+      syncAiSettings();
+    }
+    $('aiSnap').textContent = JSON.stringify(snapshot(D), null, 1); renderChat();
+  }
+  window.__ai = { send: (q, l) => aiSend(q, l), snapshot: () => snapshot(S.data), providers: PROVIDERS, system: AI_SYS };
+
+  /* ---------- backtest off the main thread (Web Worker built from the inlined engine source) ---------- */
+  let worker = null, workerOk = null, wid = 0; const pending = new Map();
+  function btJob(m) { // runs in the worker (or on the main thread as fallback): rule backtests + AI model training/evaluation
+    const x = Engine.buildCtx(m.c, m.h, m.tfSec, m.htfSec, m.top, m.topSec, m.topName), bt = Engine.backtestAll(x, m.htfName, true);
+    let ml; try { ml = ML.run(x, bt._s, bt.splitIdx); } catch (err) { ml = { ok: false, reason: String(err && err.message || err) }; }
+    delete bt._s; bt.ml = ml;
+    const groups = [bt.raw, bt.normal, bt.aplus, ...(ml.ok ? [ml.bt.normalAI, ml.bt.aplusAI] : [])];
+    for (const g of groups) for (const p of ['full', 'is', 'oos']) g[p].trades.forEach(t => { t.entryT = x.t[t.entryIdx]; t.exitT = t.exitIdx != null ? x.t[t.exitIdx] : null; });
+    return bt;
+  }
+  function getWorker() {
+    if (workerOk === false) return null; if (worker) return worker;
+    try {
+      const src = document.getElementById('indicators').textContent + '\n' + document.getElementById('engine').textContent + '\n' + document.getElementById('ml').textContent + '\nconst btJob = ' + btJob.toString() +
+        ';\nself.onmessage = e => { try { self.postMessage({ id: e.data.id, bt: btJob(e.data) }); } catch (err) { self.postMessage({ id: e.data.id, error: String(err) }); } };';
+      worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+      worker.onmessage = e => { const p = pending.get(e.data.id); if (!p) return; pending.delete(e.data.id); e.data.error ? p.reject(new Error(e.data.error)) : p.resolve(e.data.bt); };
+      worker.onerror = e => { e.preventDefault(); workerOk = false; worker = null; pending.forEach(p => p.fallback()); pending.clear(); };
+      workerOk = true; return worker;
+    } catch (e) { workerOk = false; return null; }
+  }
+  function runBacktest(job) {
+    const main = () => new Promise(res => setTimeout(() => res(btJob(job)), 30));
+    const w = getWorker(); if (!w) return main();
+    return new Promise((resolve, reject) => { const id = ++wid; pending.set(id, { resolve, reject, fallback: () => main().then(resolve) }); w.postMessage({ ...job, id }); });
+  }
+  // as much history as the API reasonably allows (OKX: candles + history-candles pagination), cached per symbol/timeframe
+  async function deepHistory(sym, tfKey, prefer, fresh) {
+    const key = sym + '|' + tfKey, tf = TFS[tfKey]; let base = S.deepCache[key];
+    if (!base || Date.now() - base.at > DEEP_TTL) {
+      const l = await candles(sym, tfKey, DEEP_BARS, prefer), span = l.c.length * tf.sec;
+      const h = await candles(sym, tf.htf, Math.ceil(span / TFS[tf.htf].sec) + 260, l.src).catch(() => ({ c: [] }));
+      const top = tf.top ? await candles(sym, tf.top, Math.ceil(span / 86400) + 260, l.src).catch(() => ({ c: [] })) : { c: [] };
+      base = S.deepCache[key] = { l: l.c, h: h.c, top: top.c, src: l.src, at: Date.now() };
+    }
+    const merge = (a, b) => { if (!b || fresh.src !== base.src) return a; const m = new Map(a.map(k => [k.t, k])); b.forEach(k => m.set(k.t, k)); return [...m.values()].sort((p, q) => p.t - q.t); };
+    return { l: merge(base.l, fresh.l), h: merge(base.h, fresh.h), top: merge(base.top, fresh.top), src: base.src };
+  }
+
+  /* ---------- multi-timeframe strip ---------- */
+  function renderMTF() {
+    const r = S.mtf[S.sym] || {};
+    $('mtf').innerHTML = MAIN_TFS.map(tf => { const raw = tf === S.tf && S.data ? S.data.evRaw : r[tf], v = raw ? modeView(raw) : null, k = v ? v.vkey : 'load';
+      return `<button data-mtf="${tf}" class="${tf === S.tf ? 'cur' : ''}" title="${tf}: ${v ? WORD[v.vkey] + ' (' + (v.score > 0 ? '+' : '') + v.score + ', ' + v.cond.label + ')' : 'loading'}" aria-label="${tf} ${v ? WORD[v.vkey] : 'loading'}"><i class="${k}"></i>${tf}</button>`; }).join('');
+  }
+  async function cachedCandles(sym, tf, count, prefer) {
+    const key = sym + '|' + tf, hit = S.candleCache[key];
+    if (hit && Date.now() - hit.at < MTF_TTL && hit.c.length >= Math.min(count, 300)) return hit;
+    const r = await candles(sym, tf, count, prefer); const v = { c: r.c, src: r.src, at: Date.now() }; S.candleCache[key] = v; return v;
+  }
+  async function updateMTF(sym, futE, prefer) {
+    const out = S.mtf[sym] = S.mtf[sym] || {};
+    for (const tf of MAIN_TFS) {
+      if (sym !== S.sym) return;
+      if (tf === S.tf) { out[tf] = S.data.evRaw; continue; }
+      try {
+        const T = TFS[tf], l = await cachedCandles(sym, tf, MTF_BARS, prefer), h = await cachedCandles(sym, T.htf, MTF_BARS, prefer);
+        const top = T.top ? await cachedCandles(sym, T.top, TOP_BARS, prefer) : null;
+        const x = Engine.buildCtx(l.c, h.c, T.sec, TFS[T.htf].sec, top ? top.c : null, 86400, T.top);
+        const i = l.c[l.c.length - 1].closed ? x.n - 1 : x.n - 2;
+        out[tf] = Engine.evaluate(x, i, futE, T.htf, { dataIssues: dataIssues(l.c, tf) });
+      } catch (e) { console.warn('MTF', tf, e.message); }
+      if (sym === S.sym) renderMTF();
+    }
+  }
+  function dataIssues(c, tf) {
+    const out = [], sec = TFS[tf].sec, lastClosed = c[c.length - 1].closed ? c[c.length - 1] : c[c.length - 2];
+    const age = Date.now() / 1000 - (lastClosed.t + sec);
+    if (age > 2 * sec + 120) out.push(`Stale data: the latest closed ${tf} candle is ${Math.round(age / 60)} min old — the feed may be lagging`);
+    if (c.length < 260) out.push(`Insufficient history: only ${c.length} candles (need ~260 for reliable 200-EMA / percentile readings)`);
+    return out;
+  }
+
+  /* ---------- load / refresh ---------- */
+  function applyResult(D, resetView) {
+    attachAI(D); D.ev = modeView(D.evRaw); S.data = D; S.ver++;
+    renderVerdict(D); renderPlan(D); renderChart(D, resetView); renderActiveTab();
+  }
+  async function load(userAction) {
+    const seq = ++S.loadSeq, sym = S.sym, tfKey = S.tf, tf = TFS[tfKey], key = sym + tfKey;
+    S.loading = true; S.lastLoadAt = Date.now(); $('dot').className = 'dot'; $('srcTxt').textContent = 'loading…';
+    if (userAction && S.lastKey !== key) { $('overlay').classList.remove('hidden'); $('overlay').textContent = `Loading ${sym} ${tfKey}…`; }
+    try {
+      const [ltf, fut] = await Promise.all([candles(sym, tfKey, LTF_BARS), futuresData(sym)]);
+      const [htf, top] = await Promise.all([candles(sym, tf.htf, HTF_BARS, ltf.src).catch(e => ({ src: 'n/a', c: [] })), tf.top ? cachedCandles(sym, tf.top, TOP_BARS, ltf.src).catch(() => null) : null]);
+      if (seq !== S.loadSeq) return; // stale response (user switched)
+      S.candleCache[sym + '|' + tfKey] = { c: ltf.c, src: ltf.src, at: Date.now() };
+      if (htf.c.length) S.candleCache[sym + '|' + tf.htf] = { c: htf.c, src: htf.src, at: Date.now() };
+      S.feedError = null;
+      const c = ltf.c, x = Engine.buildCtx(c, htf.c, tf.sec, TFS[tf.htf].sec, top ? top.c : null, 86400, tf.top);
+      const iLast = c[c.length - 1].closed ? c.length - 1 : c.length - 2;
+      const futE = { funding: fut.funding8h, oiChg24: fut.oiChg24, priceChg24: fut.priceChg24, lsr: fut.lsr };
+      const issues = dataIssues(c, tfKey); if (!htf.c.length) issues.push(`Higher-timeframe (${tf.htf}) data unavailable — trend filter can't be checked`);
+      const evRaw = Engine.evaluate(x, iLast, futE, tf.htf, { dataIssues: issues });
+      const j = x.htfIdx[iLast];
+      const htfSnap = j >= 0 ? `${fmtP(x.htf.c[j])} vs ${fmtP(x.htf.ema50[j])} / ${fmtP(x.htf.ema200[j])}` : '—';
+      const btKey = [sym, tfKey, x.t[iLast]].join('|'), cached = S.btCache.get(btKey);
+      const D = { c, x, evRaw, bt: cached ? cached.bt : null, deepSrc: cached ? cached.src : '', fut, futE, htfName: tf.htf, htfSnap, src: ltf.src, htfSrc: htf.src, at: new Date(), iLast, issues };
+      const resetView = S.lastKey !== key; S.lastKey = key;
+      applyResult(D, resetView);
+      const last = fut.last || c[c.length - 1].c;
+      $('px').textContent = fmtP(last); $('pxLabel').textContent = 'USDT perp';
+      $('ch24').textContent = fin(fut.priceChg24) ? `${fut.priceChg24 >= 0 ? '+' : ''}${fut.priceChg24.toFixed(2)}%` : ''; $('ch24').className = 'ch ' + (fut.priceChg24 >= 0 ? 'up' : 'dn');
+      $('hFund').textContent = fin(fut.funding) ? (fut.funding * 100).toFixed(4) + '%' : '—'; $('hFund').className = 'mono ' + (fut.funding > 0 ? 'up' : fut.funding < 0 ? 'dn' : '');
+      $('hOi').textContent = fin(fut.oiChg24) ? `${fut.oiChg24 >= 0 ? '+' : ''}${fut.oiChg24.toFixed(2)}%` : '—'; $('hOi').className = 'mono ' + (fut.oiChg24 >= 0 ? 'up' : 'dn');
+      $('dot').className = 'dot live'; $('srcTxt').innerHTML = `Live · <b>${ltf.src}</b>${ltf.src !== 'OKX' ? ' (fallback)' : ''}`;
+      $('upd').textContent = D.at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      $('overlay').classList.add('hidden');
+      setTitle(D); publish(D);
+      S.loading = false; S.countdown = REFRESH_SEC;
+      background(D, { sym, tfKey, tf, ltf, htf, top, futE, btKey });
+    } catch (e) {
+      console.warn('load failed', e);
+      if (seq !== S.loadSeq) return;
+      S.feedError = e.message;
+      $('dot').className = 'dot err'; $('srcTxt').textContent = navigator.onLine === false ? 'offline — retrying' : 'data error — retrying';
+      if (S.data && S.lastKey === key) { // keep the last data on screen but refuse to signal on it
+        const D = S.data, evRaw = Engine.evaluate(D.x, D.iLast, D.futE, D.htfName, { dataIssues: [`Live feed error (${navigator.onLine === false ? 'offline' : e.message.slice(0, 80)}) — showing the last good data, don't act on it`, ...(D.issues || [])] });
+        applyResult({ ...D, evRaw }, false); setTitle(S.data); publish(S.data);
+      } else { $('overlay').classList.remove('hidden'); $('overlay').textContent = (navigator.onLine === false ? "You're offline. " : '') + 'Could not load market data: ' + e.message; }
+    } finally { if (seq === S.loadSeq) { S.loading = false; S.countdown = REFRESH_SEC; } }
+  }
+  // multi-timeframe strip + deep-history backtest run after the main view is on screen
+  async function background(D, a) {
+    try {
+      await updateMTF(a.sym, a.futE, a.ltf.src);
+      if (D.bt || S.data !== D) return;
+      const deep = await deepHistory(a.sym, a.tfKey, a.ltf.src, { l: D.c, h: a.htf.c, top: a.top ? a.top.c : null, src: a.ltf.src });
+      const bt = await runBacktest({ c: deep.l, h: deep.h, top: deep.top.length ? deep.top : null, tfSec: a.tf.sec, htfSec: TFS[a.tf.htf].sec, topSec: 86400, topName: a.tf.top, htfName: a.tf.htf });
+      S.btCache.set(a.btKey, { bt, src: `${deep.src}, ${dS(deep.l[0].t)} → ${dS(deep.l[deep.l.length - 1].t)}` }); if (S.btCache.size > 12) S.btCache.delete(S.btCache.keys().next().value);
+      if (S.data && S.data.x === D.x) { S.data.bt = bt; S.data.deepSrc = S.btCache.get(a.btKey).src; refreshView(S.data); }
+    } catch (e) { console.warn('background work failed', e.message); if (S.data === D) { D.btFailed = 'history/backtest failed: ' + String(e.message).slice(0, 60); refreshView(D); } }
+  }
+  function setTitle(D) { const ev = D.ev; document.title = `${ev.vkey === 'LONG' ? '▲' : ev.vkey === 'SHORT' ? '▼' : '⏸'} ${S.mode === 'aplus' ? 'A+ ' : ''}${ev.verdict} · ${S.sym} ${S.tf} ${$('px').textContent} — Signal Terminal`; }
+  function publish(D) {
+    const ev = D.ev, bt = D.bt, pick = r => r && { n: r.n, winRate: r.winRate, tp1Rate: r.tp1Rate, tp2Rate: r.tp2Rate, expectancy: r.expectancy, avgR: r.avgR, totalR: r.totalR, maxDDR: r.maxDDR, maxDDPct: r.maxDDPct, profitFactor: r.profitFactor, meaningful: r.meaningful, from: r.from, to: r.to, bars: r.bars };
+    const btOut = bt && Object.fromEntries(['raw', 'normal', 'aplus'].map(m => [m, { full: pick(bt[m].full), is: pick(bt[m].is), oos: pick(bt[m].oos) }]));
+    const ml = bt && bt.ml, ai = D.evRaw.ai;
+    if (btOut && ml && ml.ok) for (const m of ['normalAI', 'aplusAI']) btOut[m] = { is: pick(ml.bt[m].is), oos: pick(ml.bt[m].oos) };
+    const mlOut = ml && (ml.ok ? { ok: true, nTrain: ml.nTrain, nTest: ml.nTest, lambda: ml.params.lambda, lamLL: ml.params.lamLL, thr: ml.thr, thrAvgR: ml.thrAvgR, thrAllAvgR: ml.thrAllAvgR, oos: ml.oos, insAuc: ml.ins.auc, oosTp2: ml.oosTp2, top: ml.top, skill: mlSkill(ml), filter: filterVerdict(bt) } : { ok: false, reason: ml.reason });
+    window.__lastResult = { sym: S.sym, tf: S.tf, mode: S.mode, verdict: ev.verdict, vkey: ev.vkey, normalVerdict: D.evRaw.verdict, aplusVerdict: D.evRaw.aplus.verdict, base: ev.base, score: ev.score, confidence: ev.confidence, condition: ev.cond.label,
+      blocks: ev.blocks, cautions: ev.cautions, aplusFails: D.evRaw.aplus.fails, regime: ev.regime, htf: ev.htfState, factors: ev.factors, plan: D.plan,
+      bt: btOut, ml: mlOut, aiProb: ai && ai.ready ? ai.p : null, aiThr: ai && ai.ready ? ai.thr : null, aiFilter: S.ai, btBars: bt && bt.bars, btSplit: bt && bt.split, deepSrc: D.deepSrc, btReady: !!bt, source: D.src, htfSource: D.htfSrc, fut: D.fut, bars: D.c.length, updated: D.at.toISOString() };
+  }
+
+  function buildControls() {
+    $('symSeg').innerHTML = Object.keys(SYMBOLS).map(s => `<button data-sym="${s}" role="tab" aria-selected="${s === S.sym}" class="${s === S.sym ? 'on' : ''}">${s}</button>`).join('');
+    $('tfSeg').innerHTML = MAIN_TFS.map(t => `<button data-tf="${t}" role="tab" aria-selected="${t === S.tf}" class="${t === S.tf ? 'on' : ''}">${t}</button>`).join('');
+    const on = $('symSeg').querySelector('.on'); if (on && isPhone()) $('symSeg').scrollLeft = Math.max(0, on.offsetLeft - 40);
+  }
+  function setView(sym, tf) {
+    if (sym === S.sym && tf === S.tf) return Promise.resolve();
+    S.sym = sym; S.tf = tf; localStorage.setItem('fst_sym', sym); localStorage.setItem('fst_tf', tf); buildControls(); renderMTF(); return load(true);
+  }
+  function refreshView(D) { attachAI(D); D.ev = modeView(D.evRaw); S.ver++; renderVerdict(D); renderPlan(D); renderPlanLines(D); renderMarkers(D); renderActiveTab(true); setTitle(D); publish(D); }
+  function setMode(m) { S.mode = m; localStorage.setItem('fst_mode', m); if (S.data) refreshView(S.data); }
+  function setAI(on) { S.ai = on; localStorage.setItem('fst_ai', on ? '1' : '0'); if (S.data) refreshView(S.data); }
+  $('symSeg').onclick = e => { const s = e.target.closest('button')?.dataset.sym; if (s) setView(s, S.tf); };
+  $('tfSeg').onclick = e => { const t = e.target.closest('button')?.dataset.tf; if (t) setView(S.sym, t); };
+  $('mtf').onclick = e => { const t = e.target.closest('button')?.dataset.mtf; if (t) setView(S.sym, t); };
+  $('modeBtn').onclick = () => setMode(S.mode === 'aplus' ? 'normal' : 'aplus');
+  $('aiBtn').onclick = () => setAI(!S.ai);
+  $('tabs').onclick = e => {
+    const t = e.target.closest('button')?.dataset.tab; if (!t) return; S.tab = t;
+    [...$('tabs').children].forEach(b => { b.classList.toggle('on', b.dataset.tab === t); b.setAttribute('aria-selected', b.dataset.tab === t); });
+    const tb = $('tabs'), on = tb.querySelector('.on'); if (on) { const l = on.offsetLeft, r = l + on.offsetWidth; if (l < tb.scrollLeft) tb.scrollLeft = l - 8; else if (r > tb.scrollLeft + tb.clientWidth) tb.scrollLeft = r - tb.clientWidth + 8; }
+    Object.keys(TAB_RENDER).forEach(k => $('tab-' + k).classList.toggle('hidden', k !== t));
+    renderActiveTab(t === 'backtest');
+    if (isPhone()) { const tc = $('tabsCard'); if (tc.getBoundingClientRect().top < 0) tc.scrollIntoView({ block: 'start' }); }
+  };
+  $('chartBar').onclick = e => {
+    const k = e.target.closest('button')?.dataset.tog; if (!k) return; S.show[k] = !S.show[k]; localStorage.setItem('fst_' + k, S.show[k] ? '1' : '0');
+    if (k === 'chop') { if (S.data) fillChop(S.data); syncToggles(); } else buildSubPanes();
+  };
+  document.querySelectorAll('.collapser').forEach(b => b.addEventListener('click', () => {
+    if (!isPhone()) return; const card = $(b.dataset.collapse); const c = card.classList.toggle('collapsed'); b.setAttribute('aria-expanded', !c);
+  }));
+  ['inAcct', 'inRisk', 'inLev'].forEach(id => {
+    const v = localStorage.getItem('fst_' + id); if (v) $(id).value = v;
+    $(id).addEventListener('input', () => { localStorage.setItem('fst_' + id, $(id).value); if (S.data) { renderPlan(S.data); renderPlanLines(S.data); if (S.tab === 'notes') renderActiveTab(true); else S.rendered.notes = null; } });
+  });
+  $('refreshBtn').onclick = () => load(false);
+  window.__setView = (sym, tf) => setView(sym, tf);
+  window.__setMode = m => setMode(m);
+  window.__setAI = on => setAI(on);
+  window.__chart = () => chart;
+  window.__showTab = t => document.querySelector(`#tabs button[data-tab="${t}"]`).click();
+
+  // resize / orientation: charts auto-size; re-apply pane proportions when crossing the phone breakpoint
+  let lastPhone = isPhone();
+  window.addEventListener('resize', () => { const p = isPhone(); if (p !== lastPhone) { lastPhone = p; setPaneSizes(); } });
+  window.addEventListener('orientationchange', () => setTimeout(setPaneSizes, 250));
+  // pause auto-refresh while the tab/app is hidden; refresh right away on return if the data is old
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { $('dot').className = 'dot paused'; $('cd').textContent = 'paused'; return; }
+    if (!S.loading && Date.now() - S.lastLoadAt > REFRESH_SEC * 1000) load(false); else if (S.data && !S.feedError) $('dot').className = 'dot live';
+  });
+  window.addEventListener('online', () => load(false));
+
+  buildControls(); renderPlaybook(); initChart(); renderMTF(); load(true);
+  window.__ticks = 0;
+  setInterval(() => {
+    if (document.hidden) return;
+    window.__ticks++;
+    if (S.loading) { $('cd').textContent = '…'; return; }
+    S.countdown--; $('cd').textContent = S.countdown + 's';
+    if (S.countdown <= 0) load(false);
+  }, 1000);
+
+  // service worker (installable PWA + offline app shell). Only over http(s); file:// just runs the app.
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').then(r => { window.__sw = r.scope; }).catch(e => console.warn('SW registration failed', e.message)));
+  }
+})();
+</script>
+</body>
+</html>
